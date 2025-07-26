@@ -103,7 +103,7 @@
             </div>
         </div>
         <div id="gameOver">
-            GAME OVER<br>
+            MORREU VÉI<br>
             <span style="font-size: 24px">Pressione R para reiniciar</span>
         </div>
         <div id="instructions">
@@ -289,7 +289,7 @@
             eCtx.arc(32, 32, 20, 0, Math.PI * 2);
             eCtx.fill();
             
-            sprites.enemy = enemyCanvas;
+            const enemyGlow = '#ff3366',  // Rosa mais claro para visibilidade</            sprites.enemy = enemyCanvas;
         }
 
         // Carrega sprites ao iniciar
@@ -428,8 +428,11 @@
                 const dy = player.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                // Ativa inimigo quando player chega perto
-                if (!this.active && distance < this.detectionRange) {
+                // Verifica linha de visão antes de ativar
+                const hasLineOfSight = this.checkLineOfSight(player.x, player.y);
+                
+                // Ativa inimigo quando player chega perto E tem linha de visão
+                if (!this.active && distance < this.detectionRange && hasLineOfSight) {
                     this.active = true;
                     createParticles(this.x, this.y, colors.neonPink, 10, 5);
                 }
@@ -437,8 +440,19 @@
                 // Só se move se estiver ativo
                 if (this.active && distance > 0) {
                     const moveSpeed = this.type === 'rusher' ? this.speed * 1.5 : this.speed;
-                    this.x += (dx / distance) * moveSpeed;
-                    this.y += (dy / distance) * moveSpeed;
+                    
+                    // Movimento com colisão
+                    const nextX = this.x + (dx / distance) * moveSpeed;
+                    const nextY = this.y + (dy / distance) * moveSpeed;
+                    
+                    // Verifica colisão com paredes
+                    if (!checkWallCollision(nextX, this.y, this.size)) {
+                        this.x = nextX;
+                    }
+                    if (!checkWallCollision(this.x, nextY, this.size)) {
+                        this.y = nextY;
+                    }
+                    
                     this.angle = Math.atan2(dy, dx);
                 }
 
@@ -457,6 +471,27 @@
 
                 this.glowIntensity = Math.sin(game.time * 0.1) * 0.5 + 0.5;
                 if (this.hitFlash > 0) this.hitFlash--;
+            }
+            
+            // Verifica linha de visão
+            checkLineOfSight(targetX, targetY) {
+                const steps = 20;
+                const stepX = (targetX - this.x) / steps;
+                const stepY = (targetY - this.y) / steps;
+                
+                for (let i = 1; i < steps; i++) {
+                    const checkX = this.x + stepX * i;
+                    const checkY = this.y + stepY * i;
+                    
+                    const tileX = Math.floor(checkX / tileSize);
+                    const tileY = Math.floor(checkY / tileSize);
+                    
+                    if (map[tileY] && map[tileY][tileX] === 1) {
+                        return false; // Bloqueado por parede
+                    }
+                }
+                
+                return true; // Linha de visão limpa
             }
 
             draw() {
@@ -479,45 +514,73 @@
                     
                     ctx.filter = 'none';
                 } else {
-                    // Fallback para desenho procedural
+                    // Desenho humanóide procedural
                     // Glow effect mais forte
-                    ctx.shadowBlur = 30 + this.glowIntensity * 15;
-                    ctx.shadowColor = this.active ? colors.neonPink : this.color;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = this.active ? colors.neonPink : colors.enemyGlow;
                     
                     // Flash quando atingido
                     if (this.hitFlash > 0) {
                         ctx.fillStyle = '#ffffff';
                     } else {
-                        ctx.fillStyle = this.active ? colors.neonPink : this.color;
+                        ctx.fillStyle = this.active ? colors.neonPink : colors.enemyGlow;
                     }
                     
-                    // Corpo do inimigo com borda brilhante
-                    ctx.strokeStyle = colors.neonPink;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(-this.size/2, -this.size/2);
-                    ctx.lineTo(this.size/2, 0);
-                    ctx.lineTo(-this.size/2, this.size/2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
+                    // Corpo (tronco)
+                    ctx.fillRect(-8, -12, 16, 20);
                     
-                    // Olho
+                    // Cabeça
+                    ctx.beginPath();
+                    ctx.arc(0, -12, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Braços
+                    ctx.fillRect(-12, -8, 4, 12);
+                    ctx.fillRect(8, -8, 4, 12);
+                    
+                    // Pernas
+                    ctx.fillRect(-6, 8, 5, 10);
+                    ctx.fillRect(1, 8, 5, 10);
+                    
+                    // Olhos (quando ativo)
+                    if (this.active) {
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = '#fff';
+                        ctx.fillRect(-3, -14, 2, 3);
+                        ctx.fillRect(1, -14, 2, 3);
+                    }
+                    
+                    // Contorno brilhante
                     ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#fff';
-                    ctx.beginPath();
-                    ctx.arc(0, 0, 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Pupila
-                    ctx.fillStyle = '#000';
-                    ctx.beginPath();
-                    ctx.arc(2, 0, 2, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.strokeStyle = colors.neonPink;
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(-8, -12, 16, 20);
                 }
                 
                 ctx.restore();
             }
+        }
+
+        // Função para verificar colisão com paredes
+        function checkWallCollision(x, y, size) {
+            // Verifica os 4 cantos da hitbox
+            const corners = [
+                { x: x - size/2, y: y - size/2 },
+                { x: x + size/2, y: y - size/2 },
+                { x: x - size/2, y: y + size/2 },
+                { x: x + size/2, y: y + size/2 }
+            ];
+            
+            for (let corner of corners) {
+                const tileX = Math.floor(corner.x / tileSize);
+                const tileY = Math.floor(corner.y / tileSize);
+                
+                if (map[tileY] && map[tileY][tileX] === 1) {
+                    return true; // Colidiu
+                }
+            }
+            
+            return false; // Sem colisão
         }
 
         // Sistema de partículas melhorado
@@ -760,7 +823,7 @@
             
             game.time++;
 
-            // Movimento do jogador
+            // Movimento do jogador com colisão
             let dx = 0, dy = 0;
             if (keys['w'] || keys['arrowup']) dy = -1;
             if (keys['s'] || keys['arrowdown']) dy = 1;
@@ -783,6 +846,7 @@
             player.isMoving = (dx !== 0 || dy !== 0);
             
             // Wheelie (Shift segurando)
+            let currentSpeed = player.speed;
             if (keys['shift'] && player.onBike && player.isMoving) {
                 player.currentAction = 'wheelie';
                 player.wheelieTime++;
@@ -809,7 +873,6 @@
             }
             
             // Dash (Space)
-            let currentSpeed = player.speed;
             if (keys[' '] && player.dashCooldown <= 0 && player.onBike) {
                 currentSpeed = player.dashSpeed;
                 player.dashCooldown = 30;
@@ -841,8 +904,16 @@
                 });
             }
             
-            player.x += dx * currentSpeed;
-            player.y += dy * currentSpeed;
+            // Movimento com verificação de colisão
+            const nextX = player.x + dx * currentSpeed;
+            const nextY = player.y + dy * currentSpeed;
+            
+            if (!checkWallCollision(nextX, player.y, player.size)) {
+                player.x = nextX;
+            }
+            if (!checkWallCollision(player.x, nextY, player.size)) {
+                player.y = nextY;
+            }
             
             if (player.dashCooldown > 0) player.dashCooldown--;
 
@@ -861,9 +932,7 @@
             // Ângulo do jogador
             player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
 
-            // Limites da tela
-            player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
-            player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+            // Limites da tela (removido - agora tem colisão com paredes)
 
             // Ataque
             if (mouse.pressed && player.attackCooldown <= 0) {
