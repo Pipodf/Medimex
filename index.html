@@ -158,8 +158,8 @@
             loadedCount: 0,
             totalSprites: 16,
             player: {
-                idle: [],      // Frames 0-3
-                ride: [],      // Frames 4-7
+                idle: [],      // Frames 0-3 (uma pose por direção)
+                ride: [],      // Frames 4-7 e 0-3 alternando (pedalar)
                 wheelie: [],   // Frames 8-11
                 death: []      // Frames 12-15
             },
@@ -260,17 +260,16 @@
             loadImage(spritePath + 'madmax002.png', 'idle', 2);
             loadImage(spritePath + 'madmax003.png', 'idle', 3);
             
-            // RIDE (Frames 4-7)
-            loadImage(spritePath + 'madmax004.png', 'ride', 0);  // Direita frame 1
-            loadImage(spritePath + 'madmax005.png', 'ride', 1);  // Baixo frame 1  
-            loadImage(spritePath + 'madmax006.png', 'ride', 2);  // Esquerda frame 1
-            loadImage(spritePath + 'madmax007.png', 'ride', 3);  // Cima frame 1
-            
-            // Se você tem frames extras de pedalar, adicione aqui:
-            loadImage(spritePath + 'madmax004.png', 'ride', 4);  // Direita frame 2
-            loadImage(spritePath + 'madmax005.png', 'ride', 5);  // Baixo frame 2
-            loadImage(spritePath + 'madmax006.png', 'ride', 6);  // Esquerda frame 2  
-            loadImage(spritePath + 'madmax007.png', 'ride', 7);  // Cima frame 2
+            // RIDE (Frames 4-7 são pé baixo, 0-3 são pé alto)
+            // Organizamos como: [pé alto, pé baixo] para cada direção
+            loadImage(spritePath + 'madmax000.png', 'ride', 0);  // Direita pé alto
+            loadImage(spritePath + 'madmax004.png', 'ride', 1);  // Direita pé baixo
+            loadImage(spritePath + 'madmax001.png', 'ride', 2);  // Baixo pé alto
+            loadImage(spritePath + 'madmax005.png', 'ride', 3);  // Baixo pé baixo
+            loadImage(spritePath + 'madmax002.png', 'ride', 4);  // Esquerda pé alto
+            loadImage(spritePath + 'madmax006.png', 'ride', 5);  // Esquerda pé baixo
+            loadImage(spritePath + 'madmax003.png', 'ride', 6);  // Cima pé alto
+            loadImage(spritePath + 'madmax007.png', 'ride', 7);  // Cima pé baixo
             
             // WHEELIE (Frames 8-11)
             loadImage(spritePath + 'madmax008.png', 'wheelie', 0);
@@ -950,12 +949,13 @@
             // Animação de pedalar
             if (player.currentAction === 'ride' && player.isMoving) {
                 player.animTimer++;
-                if (player.animTimer > 5) {  // Troca frame a cada 5 ticks
+                if (player.animTimer > 8) {  // Velocidade da pedalada
                     player.animTimer = 0;
                     player.animFrame = (player.animFrame + 1) % 2;  // Alterna entre 0 e 1
                 }
             } else {
                 player.animFrame = 0;
+                player.animTimer = 0;
             }
             
             // Ataque
@@ -1205,15 +1205,11 @@
                     
                     // Se está pedalando, alterna entre frames
                     if (player.currentAction === 'ride' && player.isMoving) {
-                        // Usa frame 4-5 para direita, 6-7 para baixo, etc
-                        const baseFrame = player.direction;
-                        sprite = spriteArray[baseFrame + (player.animFrame * 4)];
-                        
-                        // Se não tem frames extras, usa o básico
-                        if (!sprite || !sprite.complete) {
-                            sprite = spriteArray[player.direction];
-                        }
+                        // Calcula índice: direção * 2 + frame de animação
+                        const frameIndex = player.direction * 2 + player.animFrame;
+                        sprite = spriteArray[frameIndex];
                     } else {
+                        // Para outras ações, usa índice direto pela direção
                         sprite = spriteArray[player.direction];
                     }
                     
