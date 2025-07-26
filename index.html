@@ -1,1087 +1,1071 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="pt-BR">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2575.6">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Carnage - Prototype</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Orbitron', monospace;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            filter: contrast(1.2) saturate(1.5);
+        }
+        
+        #gameCanvas {
+            border: 3px solid #ff0066;
+            box-shadow: 0 0 30px #ff0066, inset 0 0 30px rgba(255, 0, 102, 0.3);
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 20px;
+            text-shadow: 0 0 10px #ff0066, 0 0 20px #ff0066;
+            font-weight: 900;
+            letter-spacing: 2px;
+        }
+        
+        .ui-bar {
+            margin: 10px 0;
+            width: 200px;
+            height: 20px;
+            border: 2px solid #ff0066;
+            background: rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ui-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0066, #ff00ff);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px currentColor;
+        }
+        
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff0066;
+            font-size: 72px;
+            display: none;
+            text-align: center;
+            text-shadow: 0 0 30px #ff0066, 0 0 60px #ff0066;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
+        }
+        
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ffff;
+            text-align: center;
+            font-size: 14px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+    </style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="pt-BR"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Neon Carnage - Prototype&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&amp;display=swap');</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>padding: 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: #0a0a0a;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 100vh;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-family: 'Orbitron', monospace;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>overflow: hidden;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#gameContainer {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>filter: contrast(1.2) saturate(1.5);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#gameCanvas {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 3px solid #ff0066;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 0 30px #ff0066, inset 0 0 30px rgba(255, 0, 102, 0.3);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>image-rendering: pixelated;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>image-rendering: crisp-edges;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#ui {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>top: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>left: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-shadow: 0 0 10px #ff0066, 0 0 20px #ff0066;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-weight: 900;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>letter-spacing: 2px;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.ui-bar {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>margin: 10px 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>width: 200px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>border: 2px solid #ff0066;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: rgba(0, 0, 0, 0.8);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>overflow: hidden;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>.ui-bar-fill {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>height: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>background: linear-gradient(90deg, #ff0066, #ff00ff);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transition: width 0.3s ease;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>box-shadow: 0 0 10px currentColor;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#gameOver {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>top: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>left: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transform: translate(-50%, -50%);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #ff0066;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 72px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>display: none;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-shadow: 0 0 30px #ff0066, 0 0 60px #ff0066;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>animation: pulse 1s infinite;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>@keyframes pulse {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }</p>
-<p class="p1"><span class="Apple-converted-space">            </span>50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">        </span></p>
-<p class="p1"><span class="Apple-converted-space">        </span>#instructions {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>bottom: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>left: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>transform: translateX(-50%);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: #00ffff;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>font-size: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>text-shadow: 0 0 10px #00ffff;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="gameContainer"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;canvas id="gameCanvas"&gt;&lt;/canvas&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="ui"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div&gt;VIDA&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div class="ui-bar"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="ui-bar-fill" id="healthBar" style="width: 100%"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div&gt;PONTOS: &lt;span id="score"&gt;0&lt;/span&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;div style="font-size: 14px; margin-top: 20px; color: #00ffff;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>COMBO: x&lt;span id="combo"&gt;1&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="gameOver"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>GAME OVER&lt;br&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;span style="font-size: 24px"&gt;Pressione R para reiniciar&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div id="instructions"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>WASD: MOVER | MOUSE: MIRAR | CLIQUE: ATIRAR | SHIFT: WHEELIE | ESPAÇO: DASH/ATROPELAR</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const canvas = document.getElementById('gameCanvas');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const ctx = canvas.getContext('2d');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>canvas.width = 960;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>canvas.height = 640;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Configure melhor qualidade de renderização</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ctx.imageSmoothingEnabled = false;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Estado do jogo</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const game = {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>score: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>combo: 1,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>comboTimer: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>paused: false,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>over: false,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>screenShake: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>time: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>bloodParticles: [],</p>
-<p class="p1"><span class="Apple-converted-space">            </span>deathZoom: 1,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>deathZoomTarget: 2.5,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>cameraX: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>cameraY: 0</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Paleta de cores neon</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const colors = {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player: '#00ff88',</p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemy: '#ff0066',</p>
-<p class="p1"><span class="Apple-converted-space">            </span>bullet: '#ffff00',</p>
-<p class="p1"><span class="Apple-converted-space">            </span>blood: ['#ff0066', '#cc0052', '#990039', '#660026'],</p>
-<p class="p1"><span class="Apple-converted-space">            </span>wall: '#1a0033',</p>
-<p class="p1"><span class="Apple-converted-space">            </span>floor: '#0d001a',</p>
-<p class="p1"><span class="Apple-converted-space">            </span>neonBlue: '#00ffff',</p>
-<p class="p1"><span class="Apple-converted-space">            </span>neonPink: '#ff00ff',</p>
-<p class="p1"><span class="Apple-converted-space">            </span>neonPurple: '#9945ff'</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Sistema de Sprites</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const sprites = {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loaded: false,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadedCount: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>totalSprites: 16,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player: {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>idle: [],<span class="Apple-converted-space">      </span>// Frames 0-3</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ride: [],<span class="Apple-converted-space">      </span>// Frames 4-7</p>
-<p class="p1"><span class="Apple-converted-space">                </span>wheelie: [], <span class="Apple-converted-space">  </span>// Frames 8-11</p>
-<p class="p1"><span class="Apple-converted-space">                </span>death: []<span class="Apple-converted-space">      </span>// Frames 12-15</p>
-<p class="p1"><span class="Apple-converted-space">            </span>},</p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemy: null</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Carrega sprites do Mad Max</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function loadSprites() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>console.log('🏍️ Preparando sprites...');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Como estamos no Claude, vamos criar sprites procedurais do Mad Max</p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Quando você testar localmente, os PNGs vão carregar</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Cria sprites procedurais para cada ação</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const actions = ['idle', 'ride', 'wheelie', 'death'];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const colors = {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>bike: '#333',</p>
-<p class="p1"><span class="Apple-converted-space">                </span>rider: '#ff0066',</p>
-<p class="p1"><span class="Apple-converted-space">                </span>wheel: '#222'</p>
-<p class="p1"><span class="Apple-converted-space">            </span>};</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>actions.forEach(action =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>for (let dir = 0; dir &lt; 4; dir++) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const canvas = document.createElement('canvas');</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>canvas.width = 64;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>canvas.height = 64;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const ctx = canvas.getContext('2d');</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.save();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.translate(32, 32);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.rotate(dir * Math.PI / 2);</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Desenha bike</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = colors.bike;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (action === 'wheelie') {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.rotate(-0.3); // Inclina pra wheelie</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Corpo da bike</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillRect(-20, -5, 40, 10);</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Rodas</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = colors.wheel;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.arc(-15, 0, 8, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.arc(15, 0, 8, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Rider</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = colors.rider;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (action === 'death') {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>// Caído</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.fillRect(-5, -15, 10, 20);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>// Em cima da bike</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.fillRect(-5, -10, 10, 15);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>// Cabeça</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.arc(0, -10, 5, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.restore();</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>sprites.player[action][dir] = canvas;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>sprites.loaded = true;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>console.log('✅ Sprites procedurais criados!');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Função auxiliar para carregar imagens reais (para quando sair do Claude)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>function loadImage(src, category, index) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const img = new Image();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>img.src = src;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>img.onload = () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>sprites.player[category][index] = img;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>sprites.loadedCount++;</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (sprites.loadedCount === sprites.totalSprites) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>console.log('✅ Sprites reais carregados!');</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>};</p>
-<p class="p1"><span class="Apple-converted-space">                </span>img.onerror = () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>console.log(`⚠️ Usando sprite procedural para ${src}`);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>sprites.loadedCount++;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>};</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Tenta carregar os PNGs reais (vai falhar no Claude, mas funciona local)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const spritePath = './';</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// IDLE (Frames 0-3)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax000.png', 'idle', 0);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax001.png', 'idle', 1);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax002.png', 'idle', 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax003.png', 'idle', 3);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// RIDE (Frames 4-7)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax004.png', 'ride', 0);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax005.png', 'ride', 1);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax006.png', 'ride', 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax007.png', 'ride', 3);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// WHEELIE (Frames 8-11)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax008.png', 'wheelie', 0);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax009.png', 'wheelie', 1);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax010.png', 'wheelie', 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax011.png', 'wheelie', 3);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// DEATH (Frames 12-15)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax012.png', 'death', 0);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax013.png', 'death', 1);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax014.png', 'death', 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>loadImage(spritePath + 'madmax015.png', 'death', 3);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Sprite do inimigo (temporário)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const enemyCanvas = document.createElement('canvas');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemyCanvas.width = 64;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemyCanvas.height = 64;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const eCtx = enemyCanvas.getContext('2d');</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>eCtx.fillStyle = colors.enemy;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>eCtx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>eCtx.arc(32, 32, 20, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>eCtx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>sprites.enemy = enemyCanvas;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Carrega sprites ao iniciar</p>
-<p class="p1"><span class="Apple-converted-space">        </span>loadSprites();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Jogador</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const player = {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>x: canvas.width / 2,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>y: canvas.height / 2,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>size: 24,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>speed: 5,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>dashSpeed: 15,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>health: 100,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>maxHealth: 100,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>color: colors.player,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>attacking: false,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>attackCooldown: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>invulnerable: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>angle: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>dashCooldown: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>trail: [],</p>
-<p class="p1"><span class="Apple-converted-space">            </span>sprite: null,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>frameTime: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>currentAction: 'idle',<span class="Apple-converted-space">  </span>// idle, ride, wheelie, death</p>
-<p class="p1"><span class="Apple-converted-space">            </span>direction: 0,<span class="Apple-converted-space">          </span>// 0=direita, 1=baixo, 2=esquerda, 3=cima</p>
-<p class="p1"><span class="Apple-converted-space">            </span>isMoving: false,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>wheelieTime: 0,</p>
-<p class="p1"><span class="Apple-converted-space">            </span>onBike: true</p>
-<p class="p1"><span class="Apple-converted-space">        </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Controles</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const keys = {};</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const mouse = { x: 0, y: 0, pressed: false };</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Arrays do jogo</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const enemies = [];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const projectiles = [];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const particles = [];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const corpses = [];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Mapa melhorado</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const tileSize = 32;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const mapWidth = Math.floor(canvas.width / tileSize);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const mapHeight = Math.floor(canvas.height / tileSize);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>const map = [];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Gera mapa</p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let y = 0; y &lt; mapHeight; y++) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>map[y] = [];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let x = 0; x &lt; mapWidth; x++) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (x === 0 || y === 0 || x === mapWidth - 1 || y === mapHeight - 1) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>map[y][x] = 1;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>map[y][x] = 0;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Adiciona obstáculos com design</p>
-<p class="p1"><span class="Apple-converted-space">        </span>for (let i = 0; i &lt; 15; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const x = Math.floor(Math.random() * (mapWidth - 4)) + 2;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const y = Math.floor(Math.random() * (mapHeight - 4)) + 2;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const w = Math.floor(Math.random() * 3) + 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const h = Math.floor(Math.random() * 3) + 1;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let dy = 0; dy &lt; h; dy++) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>for (let dx = 0; dx &lt; w; dx++) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (x + dx &lt; mapWidth - 1 &amp;&amp; y + dy &lt; mapHeight - 1) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>map[y + dy][x + dx] = 1;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Classe de inimigo melhorada</p>
-<p class="p1"><span class="Apple-converted-space">        </span>class Enemy {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>constructor(x, y) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.x = x;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.y = y;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.size = 20;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.speed = 2 + Math.random();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.health = 30;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.maxHealth = 30;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.color = colors.enemy;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.angle = 0;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.type = Math.random() &gt; 0.7 ? 'rusher' : 'normal';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.glowIntensity = 0;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.hitFlash = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>update() {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const dx = player.x - this.x;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const dy = player.y - this.y;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const distance = Math.sqrt(dx * dx + dy * dy);</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (distance &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const moveSpeed = this.type === 'rusher' ? this.speed * 1.5 : this.speed;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.x += (dx / distance) * moveSpeed;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.y += (dy / distance) * moveSpeed;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.angle = Math.atan2(dy, dx);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Colisão com o jogador</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (distance &lt; this.size + player.size &amp;&amp; player.invulnerable &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.health -= 10;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.invulnerable = 60;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>game.screenShake = 10;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>createBloodSplatter(player.x, player.y, 20);</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Knockback</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const knockbackAngle = Math.atan2(player.y - this.y, player.x - this.x);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.x += Math.cos(knockbackAngle) * 20;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.y += Math.sin(knockbackAngle) * 20;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.glowIntensity = Math.sin(game.time * 0.1) * 0.5 + 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (this.hitFlash &gt; 0) this.hitFlash--;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>draw() {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.save();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.translate(this.x, this.y);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.rotate(this.angle);</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Se tem sprite, usa sprite</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (sprites.loaded &amp;&amp; sprites.enemy) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Flash quando atingido</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (this.hitFlash &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.filter = 'brightness(2)';</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.drawImage(</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>sprites.enemy,</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>-32, -32, // Centraliza o sprite</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>64, 64</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>);</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.filter = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Fallback para desenho procedural</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Glow effect</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.shadowBlur = 20 + this.glowIntensity * 10;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.shadowColor = this.color;</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Flash quando atingido</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (this.hitFlash &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.fillStyle = '#ffffff';</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.fillStyle = this.color;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Corpo do inimigo (formato mais interessante)</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.moveTo(-this.size/2, -this.size/2);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.lineTo(this.size/2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.lineTo(-this.size/2, this.size/2);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.closePath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Olho</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.shadowBlur = 0;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = '#fff';</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.arc(0, 0, 4, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Pupila</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = '#000';</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.arc(2, 0, 2, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.restore();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Sistema de partículas melhorado</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function createParticles(x, y, color, count, speed = 8) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let i = 0; i &lt; count; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>particles.push({</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>x: x,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>y: y,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>vx: Math.cos(angle) * speed * (0.5 + Math.random()),</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>vy: Math.sin(angle) * speed * (0.5 + Math.random()),</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>life: 30 + Math.random() * 20,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>maxLife: 50,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>color: color,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>size: Math.random() * 4 + 2</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Sistema de sangue</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function createBloodSplatter(x, y, count) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let i = 0; i &lt; count; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.bloodParticles.push({</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>x: x + (Math.random() - 0.5) * 20,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>y: y + (Math.random() - 0.5) * 20,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>size: Math.random() * 8 + 4,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>color: colors.blood[Math.floor(Math.random() * colors.blood.length)]</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Projétil melhorado</p>
-<p class="p1"><span class="Apple-converted-space">        </span>class Projectile {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>constructor(x, y, angle) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.x = x;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.y = y;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.speed = 15;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.vx = Math.cos(angle) * this.speed;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.vy = Math.sin(angle) * this.speed;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.size = 6;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.damage = 20;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.trail = [];</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.life = 60;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>update() {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.x += this.vx;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.y += this.vy;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.life--;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Trail effect</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.trail.push({ x: this.x, y: this.y });</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (this.trail.length &gt; 5) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>this.trail.shift();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Colisão com paredes</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const tileX = Math.floor(this.x / tileSize);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const tileY = Math.floor(this.y / tileSize);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (map[tileY] &amp;&amp; map[tileY][tileX] === 1) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>createParticles(this.x, this.y, colors.bullet, 5, 4);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>return true;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Colisão com inimigos</p>
-<p class="p1"><span class="Apple-converted-space">                </span>let hit = false;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>enemies.forEach((enemy, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const dx = this.x - enemy.x;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const dy = this.y - enemy.y;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const distance = Math.sqrt(dx * dx + dy * dy);</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (distance &lt; enemy.size + this.size) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>enemy.health -= this.damage;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>enemy.hitFlash = 5;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>createParticles(enemy.x, enemy.y, enemy.color, 8);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>createBloodSplatter(enemy.x, enemy.y, 10);</p>
-<p class="p2"><span class="Apple-converted-space">                        </span></p>
-<p class="p1"><span class="Apple-converted-space">                        </span>if (enemy.health &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>// Morte do inimigo</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>corpses.push({</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>x: enemy.x,</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>y: enemy.y,</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>angle: enemy.angle,</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>size: enemy.size,</p>
-<p class="p1"><span class="Apple-converted-space">                                </span>color: enemy.color</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>});</p>
-<p class="p2"><span class="Apple-converted-space">                            </span></p>
-<p class="p1"><span class="Apple-converted-space">                            </span>enemies.splice(index, 1);</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>game.score += 100 * game.combo;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>game.combo = Math.min(game.combo + 1, 10);</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>game.comboTimer = 120;</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>createParticles(enemy.x, enemy.y, colors.neonPink, 20, 10);</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>game.screenShake = 8;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                        </span></p>
-<p class="p1"><span class="Apple-converted-space">                        </span>hit = true;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>return hit || this.life &lt;= 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>draw() {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Trail</p>
-<p class="p1"><span class="Apple-converted-space">                </span>this.trail.forEach((point, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.globalAlpha = index / this.trail.length * 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = colors.bullet;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillRect(point.x - 2, point.y - 2, 4, 4);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.globalAlpha = 1;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Projétil com glow</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowBlur = 10;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowColor = colors.bullet;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillStyle = colors.bullet;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowBlur = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Spawn de inimigos melhorado</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function spawnEnemy() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const spawnPoints = [];</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Encontra pontos válidos de spawn</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let i = 0; i &lt; 4; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>let x, y;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const side = i;</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>switch(side) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>case 0: x = Math.random() * canvas.width; y = 40; break;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>case 1: x = canvas.width - 40; y = Math.random() * canvas.height; break;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>case 2: x = Math.random() * canvas.width; y = canvas.height - 40; break;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>case 3: x = 40; y = Math.random() * canvas.height; break;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>spawnPoints.push({ x, y });</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Escolhe o ponto mais distante do jogador</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let bestPoint = spawnPoints[0];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let maxDist = 0;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>spawnPoints.forEach(point =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const dist = Math.sqrt(Math.pow(point.x - player.x, 2) + Math.pow(point.y - player.y, 2));</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (dist &gt; maxDist) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>maxDist = dist;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>bestPoint = point;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemies.push(new Enemy(bestPoint.x, bestPoint.y));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>createParticles(bestPoint.x, bestPoint.y, colors.neonPurple, 10, 5);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Controles</p>
-<p class="p1"><span class="Apple-converted-space">        </span>window.addEventListener('keydown', (e) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>keys[e.key.toLowerCase()] = true;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (e.key.toLowerCase() === 'r' &amp;&amp; game.over) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>resetGame();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>window.addEventListener('keyup', (e) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>keys[e.key.toLowerCase()] = false;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>canvas.addEventListener('mousemove', (e) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const rect = canvas.getBoundingClientRect();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>mouse.x = e.clientX - rect.left;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>mouse.y = e.clientY - rect.top;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>canvas.addEventListener('mousedown', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>mouse.pressed = true;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>canvas.addEventListener('mouseup', () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>mouse.pressed = false;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Reset do jogo</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function resetGame() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.health = player.maxHealth;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.x = canvas.width / 2;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.y = canvas.height / 2;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.trail = [];</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.currentAction = 'idle';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.wheelieTime = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.score = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.combo = 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.over = false;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.screenShake = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.deathZoom = 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemies.length = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>projectiles.length = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>particles.length = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>corpses.length = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.bloodParticles.length = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('gameOver').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Game loop</p>
-<p class="p1"><span class="Apple-converted-space">        </span>function update() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (game.over) return;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.time++;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Movimento do jogador</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let dx = 0, dy = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (keys['w'] || keys['arrowup']) dy = -1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (keys['s'] || keys['arrowdown']) dy = 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (keys['a'] || keys['arrowleft']) dx = -1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (keys['d'] || keys['arrowright']) dx = 1;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Atualiza direção baseada no movimento</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (dx &gt; 0) player.direction = 0;<span class="Apple-converted-space">      </span>// Direita</p>
-<p class="p1"><span class="Apple-converted-space">            </span>else if (dy &gt; 0) player.direction = 1; // Baixo</p>
-<p class="p1"><span class="Apple-converted-space">            </span>else if (dx &lt; 0) player.direction = 2; // Esquerda</p>
-<p class="p1"><span class="Apple-converted-space">            </span>else if (dy &lt; 0) player.direction = 3; // Cima</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Normaliza movimento diagonal</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (dx !== 0 &amp;&amp; dy !== 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>dx *= 0.707;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>dy *= 0.707;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Verifica se está se movendo</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.isMoving = (dx !== 0 || dy !== 0);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Wheelie (Shift segurando)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (keys['shift'] &amp;&amp; player.onBike &amp;&amp; player.isMoving) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.currentAction = 'wheelie';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.wheelieTime++;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>currentSpeed = player.speed * 1.5; // Mais rápido no wheelie</p>
-<p class="p1"><span class="Apple-converted-space">                </span>createParticles(player.x, player.y, colors.neonBlue, 2, 3);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (player.wheelieTime &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Bônus por wheelie longo</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (player.wheelieTime &gt; 60) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>game.score += 50;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>createParticles(player.x, player.y, colors.neonPink, 20, 8);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.wheelieTime = 0;</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Define ação atual</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (player.health &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.currentAction = 'death';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else if (player.isMoving) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.currentAction = 'ride';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.currentAction = 'idle';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Dash (Space)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>let currentSpeed = player.speed;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (keys[' '] &amp;&amp; player.dashCooldown &lt;= 0 &amp;&amp; player.onBike) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>currentSpeed = player.dashSpeed;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.dashCooldown = 30;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>createParticles(player.x, player.y, colors.player, 10, 5);</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Atropela inimigos durante dash</p>
-<p class="p1"><span class="Apple-converted-space">                </span>enemies.forEach((enemy, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const dx = enemy.x - player.x;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const dy = enemy.y - player.y;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const distance = Math.sqrt(dx * dx + dy * dy);</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (distance &lt; enemy.size + player.size + 10) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>enemy.health = 0;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>corpses.push({</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>x: enemy.x,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>y: enemy.y,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>angle: enemy.angle,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>size: enemy.size,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>color: enemy.color</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>enemies.splice(index, 1);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>game.score += 200 * game.combo;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>game.combo = Math.min(game.combo + 1, 10);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>game.comboTimer = 120;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>createBloodSplatter(enemy.x, enemy.y, 30);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>createParticles(enemy.x, enemy.y, colors.neonPink, 30, 12);</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>game.screenShake = 15;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.x += dx * currentSpeed;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.y += dy * currentSpeed;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (player.dashCooldown &gt; 0) player.dashCooldown--;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Trail do jogador</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (Math.abs(dx) &gt; 0 || Math.abs(dy) &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.trail.push({<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>x: player.x,<span class="Apple-converted-space"> </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>y: player.y,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>angle: player.angle</p>
-<p class="p1"><span class="Apple-converted-space">                </span>});</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (player.trail.length &gt; 10) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>player.trail.shift();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Ângulo do jogador</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Limites da tela</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Ataque</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (mouse.pressed &amp;&amp; player.attackCooldown &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>projectiles.push(new Projectile(player.x, player.y, player.angle));</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.attackCooldown = 8;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.screenShake = 3;</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Recuo</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.x -= Math.cos(player.angle) * 3;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.y -= Math.sin(player.angle) * 3;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (player.attackCooldown &gt; 0) player.attackCooldown--;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (player.invulnerable &gt; 0) player.invulnerable--;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Combo timer</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (game.comboTimer &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.comboTimer--;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.combo = 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Screen shake decay</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (game.screenShake &gt; 0) game.screenShake *= 0.9;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Atualiza inimigos</p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemies.forEach(enemy =&gt; enemy.update());</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Atualiza projéteis</p>
-<p class="p1"><span class="Apple-converted-space">            </span>projectiles.forEach((projectile, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (projectile.update()) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>projectiles.splice(index, 1);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Atualiza partículas</p>
-<p class="p1"><span class="Apple-converted-space">            </span>particles.forEach((particle, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>particle.x += particle.vx;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>particle.y += particle.vy;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>particle.vx *= 0.95;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>particle.vy *= 0.95;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>particle.life--;</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (particle.life &lt;= 0) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>particles.splice(index, 1);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Spawn de inimigos (aumenta com o tempo)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const spawnRate = Math.min(0.02 + (game.time / 10000), 0.05);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (Math.random() &lt; spawnRate) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>spawnEnemy();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Game over com zoom dramático</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (player.health &lt;= 0 &amp;&amp; !game.over) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.over = true;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>player.currentAction = 'death';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Define ponto focal do zoom na posição da morte</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.cameraX = player.x;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.cameraY = player.y;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Cria explosão de partículas na morte</p>
-<p class="p1"><span class="Apple-converted-space">                </span>createBloodSplatter(player.x, player.y, 50);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>createParticles(player.x, player.y, colors.enemy, 30, 15);</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Delay para mostrar game over</p>
-<p class="p1"><span class="Apple-converted-space">                </span>setTimeout(() =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>document.getElementById('gameOver').style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}, 2000);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Anima zoom da morte</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (game.over &amp;&amp; game.deathZoom &lt; game.deathZoomTarget) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>game.deathZoom += 0.02;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Atualiza UI</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('healthBar').style.width = (player.health / player.maxHealth * 100) + '%';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('score').textContent = game.score;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('combo').textContent = game.combo;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function draw() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Salva estado do canvas</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.save();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Aplica zoom dramático na morte</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (game.over) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Calcula centro do zoom</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const zoomCenterX = game.cameraX;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>const zoomCenterY = game.cameraY;</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Translada para o centro, aplica zoom, volta</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.translate(canvas.width/2, canvas.height/2);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.scale(game.deathZoom, game.deathZoom);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.translate(-zoomCenterX, -zoomCenterY);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else if (game.screenShake &gt; 1) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Screen shake normal (não na morte)</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.translate(</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>(Math.random() - 0.5) * game.screenShake,</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>(Math.random() - 0.5) * game.screenShake</p>
-<p class="p1"><span class="Apple-converted-space">                </span>);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Limpa canvas com cor de fundo</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fillStyle = colors.floor;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fillRect(0, 0, canvas.width, canvas.height);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Padrão de piso</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.strokeStyle = '#1a0033';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.lineWidth = 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let x = 0; x &lt; canvas.width; x += tileSize) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.moveTo(x, 0);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.lineTo(x, canvas.height);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.stroke();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let y = 0; y &lt; canvas.height; y += tileSize) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.moveTo(0, y);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.lineTo(canvas.width, y);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.stroke();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Sangue no chão</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 0.7;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>game.bloodParticles.forEach(blood =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillStyle = blood.color;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.arc(blood.x, blood.y, blood.size, 0, Math.PI * 2);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fill();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 1;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Desenha mapa/paredes</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.shadowBlur = 10;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.shadowColor = colors.neonPurple;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let y = 0; y &lt; map.length; y++) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>for (let x = 0; x &lt; map[y].length; x++) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (map[y][x] === 1) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.fillStyle = colors.wall;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.fillRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);</p>
-<p class="p2"><span class="Apple-converted-space">                        </span></p>
-<p class="p1"><span class="Apple-converted-space">                        </span>// Borda neon</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.strokeStyle = colors.neonPurple;</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.strokeRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.shadowBlur = 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Desenha corpos</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>corpses.forEach(corpse =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.save();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.translate(corpse.x, corpse.y);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.rotate(corpse.angle + Math.PI / 2);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillStyle = '#330011';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillRect(-corpse.size/2, -corpse.size/2, corpse.size, corpse.size);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.restore();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 1;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Desenha partículas</p>
-<p class="p1"><span class="Apple-converted-space">            </span>particles.forEach(particle =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.globalAlpha = particle.life / particle.maxLife;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillStyle = particle.color;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowBlur = 5;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowColor = particle.color;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillRect(particle.x - particle.size/2, particle.y - particle.size/2, particle.size, particle.size);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.shadowBlur = 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Desenha inimigos</p>
-<p class="p1"><span class="Apple-converted-space">            </span>enemies.forEach(enemy =&gt; enemy.draw());</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Desenha projéteis</p>
-<p class="p1"><span class="Apple-converted-space">            </span>projectiles.forEach(projectile =&gt; projectile.draw());</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Desenha trail do jogador</p>
-<p class="p1"><span class="Apple-converted-space">            </span>player.trail.forEach((point, index) =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.globalAlpha = index / player.trail.length * 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillStyle = colors.player;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.save();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.translate(point.x, point.y);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.rotate(point.angle);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillRect(-player.size/3, -player.size/3, player.size/1.5, player.size/1.5);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.restore();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>});</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 1;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Desenha jogador</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.save();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.translate(player.x, player.y);</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Rotação suave para a mira (só visual, não afeta o sprite)</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const displayAngle = player.angle;</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Pisca quando invulnerável</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (player.invulnerable % 10 &lt; 5) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Se tem sprite do Mad Max, usa sprite</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (sprites.loaded &amp;&amp; sprites.player[player.currentAction]) {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const spriteArray = sprites.player[player.currentAction];</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>const sprite = spriteArray[player.direction];</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>if (sprite &amp;&amp; sprite.complete) {</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>// Desenha o sprite do Mad Max</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>ctx.drawImage(</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>sprite,</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>-32, -32,<span class="Apple-converted-space">  </span>// Centraliza o sprite de 64x64</p>
-<p class="p1"><span class="Apple-converted-space">                            </span>64, 64</p>
-<p class="p1"><span class="Apple-converted-space">                        </span>);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Fallback para desenho procedural</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.rotate(displayAngle);</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Glow</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.shadowBlur = 20;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.shadowColor = player.color;</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Corpo do jogador (design cyberpunk)</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = player.color;</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.moveTo(player.size/2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.lineTo(-player.size/3, -player.size/3);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.lineTo(-player.size/2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.lineTo(-player.size/3, player.size/3);</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.closePath();</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fill();</p>
-<p class="p2"><span class="Apple-converted-space">                    </span></p>
-<p class="p1"><span class="Apple-converted-space">                    </span>// Detalhe central</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillStyle = '#fff';</p>
-<p class="p1"><span class="Apple-converted-space">                    </span>ctx.fillRect(-2, -2, 8, 4);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p2"><span class="Apple-converted-space">                </span></p>
-<p class="p1"><span class="Apple-converted-space">                </span>// Linha de mira (sempre aparece)</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.rotate(displayAngle);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.strokeStyle = colors.neonBlue;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.globalAlpha = 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.lineWidth = 2;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.beginPath();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.moveTo(player.size/2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.lineTo(player.size * 2, 0);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.stroke();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.globalAlpha = 1;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.restore();</p>
-<p class="p2"><span class="Apple-converted-space">            </span></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// UI do Wheelie</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (player.currentAction === 'wheelie' &amp;&amp; player.wheelieTime &gt; 30) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillStyle = colors.neonPink;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.font = 'bold 24px Orbitron';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.textAlign = 'center';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowBlur = 10;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowColor = colors.neonPink;</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillText('WHEELIE!', player.x, player.y - 50);</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.shadowBlur = 0;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Efeito de scanlines</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 0.05;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>for (let y = 0; y &lt; canvas.height; y += 4) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillStyle = '#fff';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>ctx.fillRect(0, y, canvas.width, 2);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.globalAlpha = 1;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>// Vinheta</p>
-<p class="p1"><span class="Apple-converted-space">            </span>const gradient = ctx.createRadialGradient(</p>
-<p class="p1"><span class="Apple-converted-space">                </span>canvas.width/2, canvas.height/2, 0,</p>
-<p class="p1"><span class="Apple-converted-space">                </span>canvas.width/2, canvas.height/2, canvas.width/2</p>
-<p class="p1"><span class="Apple-converted-space">            </span>);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gradient.addColorStop(0, 'rgba(0,0,0,0)');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>gradient.addColorStop(1, 'rgba(0,0,0,0.5)');</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fillStyle = gradient;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.fillRect(0, 0, canvas.width, canvas.height);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">            </span>ctx.restore();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>function gameLoop() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>update();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>draw();</p>
-<p class="p1"><span class="Apple-converted-space">            </span>requestAnimationFrame(gameLoop);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>// Inicia o jogo</p>
-<p class="p1"><span class="Apple-converted-space">        </span>gameLoop();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            <div>VIDA</div>
+            <div class="ui-bar">
+                <div class="ui-bar-fill" id="healthBar" style="width: 100%"></div>
+            </div>
+            <div>PONTOS: <span id="score">0</span></div>
+            <div style="font-size: 14px; margin-top: 20px; color: #00ffff;">
+                COMBO: x<span id="combo">1</span>
+            </div>
+        </div>
+        <div id="gameOver">
+            GAME OVER<br>
+            <span style="font-size: 24px">Pressione R para reiniciar</span>
+        </div>
+        <div id="instructions">
+            WASD: MOVER | MOUSE: MIRAR | CLIQUE: ATIRAR | SHIFT: WHEELIE | ESPAÇO: DASH/ATROPELAR
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 960;
+        canvas.height = 640;
+
+        // Configure melhor qualidade de renderização
+        ctx.imageSmoothingEnabled = false;
+
+        // Estado do jogo
+        const game = {
+            score: 0,
+            combo: 1,
+            comboTimer: 0,
+            paused: false,
+            over: false,
+            screenShake: 0,
+            time: 0,
+            bloodParticles: [],
+            deathZoom: 1,
+            deathZoomTarget: 2.5,
+            cameraX: 0,
+            cameraY: 0
+        };
+
+        // Paleta de cores neon
+        const colors = {
+            player: '#00ff88',
+            enemy: '#ff0066',
+            bullet: '#ffff00',
+            blood: ['#ff0066', '#cc0052', '#990039', '#660026'],
+            wall: '#1a0033',
+            floor: '#0d001a',
+            neonBlue: '#00ffff',
+            neonPink: '#ff00ff',
+            neonPurple: '#9945ff'
+        };
+
+        // Sistema de Sprites
+        const sprites = {
+            loaded: false,
+            loadedCount: 0,
+            totalSprites: 16,
+            player: {
+                idle: [],      // Frames 0-3
+                ride: [],      // Frames 4-7
+                wheelie: [],   // Frames 8-11
+                death: []      // Frames 12-15
+            },
+            enemy: null
+        };
+
+        // Carrega sprites do Mad Max
+        function loadSprites() {
+            console.log('🏍️ Preparando sprites...');
+            
+            // Como estamos no Claude, vamos criar sprites procedurais do Mad Max
+            // Quando você testar localmente, os PNGs vão carregar
+            
+            // Cria sprites procedurais para cada ação
+            const actions = ['idle', 'ride', 'wheelie', 'death'];
+            const colors = {
+                bike: '#333',
+                rider: '#ff0066',
+                wheel: '#222'
+            };
+            
+            actions.forEach(action => {
+                for (let dir = 0; dir < 4; dir++) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 64;
+                    canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    
+                    ctx.save();
+                    ctx.translate(32, 32);
+                    ctx.rotate(dir * Math.PI / 2);
+                    
+                    // Desenha bike
+                    ctx.fillStyle = colors.bike;
+                    if (action === 'wheelie') {
+                        ctx.rotate(-0.3); // Inclina pra wheelie
+                    }
+                    
+                    // Corpo da bike
+                    ctx.fillRect(-20, -5, 40, 10);
+                    
+                    // Rodas
+                    ctx.fillStyle = colors.wheel;
+                    ctx.beginPath();
+                    ctx.arc(-15, 0, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(15, 0, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Rider
+                    ctx.fillStyle = colors.rider;
+                    if (action === 'death') {
+                        // Caído
+                        ctx.fillRect(-5, -15, 10, 20);
+                    } else {
+                        // Em cima da bike
+                        ctx.fillRect(-5, -10, 10, 15);
+                        // Cabeça
+                        ctx.beginPath();
+                        ctx.arc(0, -10, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.restore();
+                    
+                    sprites.player[action][dir] = canvas;
+                }
+            });
+            
+            sprites.loaded = true;
+            console.log('✅ Sprites procedurais criados!');
+            
+            // Função auxiliar para carregar imagens reais (para quando sair do Claude)
+            function loadImage(src, category, index) {
+                const img = new Image();
+                img.src = src;
+                img.onload = () => {
+                    sprites.player[category][index] = img;
+                    sprites.loadedCount++;
+                    
+                    if (sprites.loadedCount === sprites.totalSprites) {
+                        console.log('✅ Sprites reais carregados!');
+                    }
+                };
+                img.onerror = () => {
+                    console.log(`⚠️ Usando sprite procedural para ${src}`);
+                    sprites.loadedCount++;
+                };
+            }
+            
+            // Tenta carregar os PNGs reais (vai falhar no Claude, mas funciona local)
+            const spritePath = './';
+            
+            // IDLE (Frames 0-3)
+            loadImage(spritePath + 'madmax000.png', 'idle', 0);
+            loadImage(spritePath + 'madmax001.png', 'idle', 1);
+            loadImage(spritePath + 'madmax002.png', 'idle', 2);
+            loadImage(spritePath + 'madmax003.png', 'idle', 3);
+            
+            // RIDE (Frames 4-7)
+            loadImage(spritePath + 'madmax004.png', 'ride', 0);
+            loadImage(spritePath + 'madmax005.png', 'ride', 1);
+            loadImage(spritePath + 'madmax006.png', 'ride', 2);
+            loadImage(spritePath + 'madmax007.png', 'ride', 3);
+            
+            // WHEELIE (Frames 8-11)
+            loadImage(spritePath + 'madmax008.png', 'wheelie', 0);
+            loadImage(spritePath + 'madmax009.png', 'wheelie', 1);
+            loadImage(spritePath + 'madmax010.png', 'wheelie', 2);
+            loadImage(spritePath + 'madmax011.png', 'wheelie', 3);
+            
+            // DEATH (Frames 12-15)
+            loadImage(spritePath + 'madmax012.png', 'death', 0);
+            loadImage(spritePath + 'madmax013.png', 'death', 1);
+            loadImage(spritePath + 'madmax014.png', 'death', 2);
+            loadImage(spritePath + 'madmax015.png', 'death', 3);
+            
+            // Sprite do inimigo (temporário)
+            const enemyCanvas = document.createElement('canvas');
+            enemyCanvas.width = 64;
+            enemyCanvas.height = 64;
+            const eCtx = enemyCanvas.getContext('2d');
+            
+            eCtx.fillStyle = colors.enemy;
+            eCtx.beginPath();
+            eCtx.arc(32, 32, 20, 0, Math.PI * 2);
+            eCtx.fill();
+            
+            sprites.enemy = enemyCanvas;
+        }
+
+        // Carrega sprites ao iniciar
+        loadSprites();
+
+        // Jogador
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 24,
+            speed: 5,
+            dashSpeed: 15,
+            health: 100,
+            maxHealth: 100,
+            color: colors.player,
+            attacking: false,
+            attackCooldown: 0,
+            invulnerable: 0,
+            angle: 0,
+            dashCooldown: 0,
+            trail: [],
+            sprite: null,
+            frameTime: 0,
+            currentAction: 'idle',  // idle, ride, wheelie, death
+            direction: 0,          // 0=direita, 1=baixo, 2=esquerda, 3=cima
+            isMoving: false,
+            wheelieTime: 0,
+            onBike: true
+        };
+
+        // Controles
+        const keys = {};
+        const mouse = { x: 0, y: 0, pressed: false };
+
+        // Arrays do jogo
+        const enemies = [];
+        const projectiles = [];
+        const particles = [];
+        const corpses = [];
+
+        // Mapa melhorado
+        const tileSize = 32;
+        const mapWidth = Math.floor(canvas.width / tileSize);
+        const mapHeight = Math.floor(canvas.height / tileSize);
+        const map = [];
+
+        // Gera mapa
+        for (let y = 0; y < mapHeight; y++) {
+            map[y] = [];
+            for (let x = 0; x < mapWidth; x++) {
+                if (x === 0 || y === 0 || x === mapWidth - 1 || y === mapHeight - 1) {
+                    map[y][x] = 1;
+                } else {
+                    map[y][x] = 0;
+                }
+            }
+        }
+
+        // Adiciona obstáculos com design
+        for (let i = 0; i < 15; i++) {
+            const x = Math.floor(Math.random() * (mapWidth - 4)) + 2;
+            const y = Math.floor(Math.random() * (mapHeight - 4)) + 2;
+            const w = Math.floor(Math.random() * 3) + 1;
+            const h = Math.floor(Math.random() * 3) + 1;
+            
+            for (let dy = 0; dy < h; dy++) {
+                for (let dx = 0; dx < w; dx++) {
+                    if (x + dx < mapWidth - 1 && y + dy < mapHeight - 1) {
+                        map[y + dy][x + dx] = 1;
+                    }
+                }
+            }
+        }
+
+        // Classe de inimigo melhorada
+        class Enemy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.size = 20;
+                this.speed = 2 + Math.random();
+                this.health = 30;
+                this.maxHealth = 30;
+                this.color = colors.enemy;
+                this.angle = 0;
+                this.type = Math.random() > 0.7 ? 'rusher' : 'normal';
+                this.glowIntensity = 0;
+                this.hitFlash = 0;
+            }
+
+            update() {
+                const dx = player.x - this.x;
+                const dy = player.y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > 0) {
+                    const moveSpeed = this.type === 'rusher' ? this.speed * 1.5 : this.speed;
+                    this.x += (dx / distance) * moveSpeed;
+                    this.y += (dy / distance) * moveSpeed;
+                    this.angle = Math.atan2(dy, dx);
+                }
+
+                // Colisão com o jogador
+                if (distance < this.size + player.size && player.invulnerable <= 0) {
+                    player.health -= 10;
+                    player.invulnerable = 60;
+                    game.screenShake = 10;
+                    createBloodSplatter(player.x, player.y, 20);
+                    
+                    // Knockback
+                    const knockbackAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                    player.x += Math.cos(knockbackAngle) * 20;
+                    player.y += Math.sin(knockbackAngle) * 20;
+                }
+
+                this.glowIntensity = Math.sin(game.time * 0.1) * 0.5 + 0.5;
+                if (this.hitFlash > 0) this.hitFlash--;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                // Se tem sprite, usa sprite
+                if (sprites.loaded && sprites.enemy) {
+                    // Flash quando atingido
+                    if (this.hitFlash > 0) {
+                        ctx.filter = 'brightness(2)';
+                    }
+                    
+                    ctx.drawImage(
+                        sprites.enemy,
+                        -32, -32, // Centraliza o sprite
+                        64, 64
+                    );
+                    
+                    ctx.filter = 'none';
+                } else {
+                    // Fallback para desenho procedural
+                    // Glow effect
+                    ctx.shadowBlur = 20 + this.glowIntensity * 10;
+                    ctx.shadowColor = this.color;
+                    
+                    // Flash quando atingido
+                    if (this.hitFlash > 0) {
+                        ctx.fillStyle = '#ffffff';
+                    } else {
+                        ctx.fillStyle = this.color;
+                    }
+                    
+                    // Corpo do inimigo (formato mais interessante)
+                    ctx.beginPath();
+                    ctx.moveTo(-this.size/2, -this.size/2);
+                    ctx.lineTo(this.size/2, 0);
+                    ctx.lineTo(-this.size/2, this.size/2);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Olho
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Pupila
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.arc(2, 0, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        // Sistema de partículas melhorado
+        function createParticles(x, y, color, count, speed = 8) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed * (0.5 + Math.random()),
+                    vy: Math.sin(angle) * speed * (0.5 + Math.random()),
+                    life: 30 + Math.random() * 20,
+                    maxLife: 50,
+                    color: color,
+                    size: Math.random() * 4 + 2
+                });
+            }
+        }
+
+        // Sistema de sangue
+        function createBloodSplatter(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                game.bloodParticles.push({
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y + (Math.random() - 0.5) * 20,
+                    size: Math.random() * 8 + 4,
+                    color: colors.blood[Math.floor(Math.random() * colors.blood.length)]
+                });
+            }
+        }
+
+        // Projétil melhorado
+        class Projectile {
+            constructor(x, y, angle) {
+                this.x = x;
+                this.y = y;
+                this.speed = 15;
+                this.vx = Math.cos(angle) * this.speed;
+                this.vy = Math.sin(angle) * this.speed;
+                this.size = 6;
+                this.damage = 20;
+                this.trail = [];
+                this.life = 60;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+
+                // Trail effect
+                this.trail.push({ x: this.x, y: this.y });
+                if (this.trail.length > 5) {
+                    this.trail.shift();
+                }
+
+                // Colisão com paredes
+                const tileX = Math.floor(this.x / tileSize);
+                const tileY = Math.floor(this.y / tileSize);
+                if (map[tileY] && map[tileY][tileX] === 1) {
+                    createParticles(this.x, this.y, colors.bullet, 5, 4);
+                    return true;
+                }
+
+                // Colisão com inimigos
+                let hit = false;
+                enemies.forEach((enemy, index) => {
+                    const dx = this.x - enemy.x;
+                    const dy = this.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < enemy.size + this.size) {
+                        enemy.health -= this.damage;
+                        enemy.hitFlash = 5;
+                        createParticles(enemy.x, enemy.y, enemy.color, 8);
+                        createBloodSplatter(enemy.x, enemy.y, 10);
+                        
+                        if (enemy.health <= 0) {
+                            // Morte do inimigo
+                            corpses.push({
+                                x: enemy.x,
+                                y: enemy.y,
+                                angle: enemy.angle,
+                                size: enemy.size,
+                                color: enemy.color
+                            });
+                            
+                            enemies.splice(index, 1);
+                            game.score += 100 * game.combo;
+                            game.combo = Math.min(game.combo + 1, 10);
+                            game.comboTimer = 120;
+                            createParticles(enemy.x, enemy.y, colors.neonPink, 20, 10);
+                            game.screenShake = 8;
+                        }
+                        
+                        hit = true;
+                    }
+                });
+                
+                return hit || this.life <= 0;
+            }
+
+            draw() {
+                // Trail
+                this.trail.forEach((point, index) => {
+                    ctx.globalAlpha = index / this.trail.length * 0.5;
+                    ctx.fillStyle = colors.bullet;
+                    ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
+                });
+                ctx.globalAlpha = 1;
+
+                // Projétil com glow
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = colors.bullet;
+                ctx.fillStyle = colors.bullet;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        // Spawn de inimigos melhorado
+        function spawnEnemy() {
+            const spawnPoints = [];
+            
+            // Encontra pontos válidos de spawn
+            for (let i = 0; i < 4; i++) {
+                let x, y;
+                const side = i;
+                
+                switch(side) {
+                    case 0: x = Math.random() * canvas.width; y = 40; break;
+                    case 1: x = canvas.width - 40; y = Math.random() * canvas.height; break;
+                    case 2: x = Math.random() * canvas.width; y = canvas.height - 40; break;
+                    case 3: x = 40; y = Math.random() * canvas.height; break;
+                }
+                
+                spawnPoints.push({ x, y });
+            }
+            
+            // Escolhe o ponto mais distante do jogador
+            let bestPoint = spawnPoints[0];
+            let maxDist = 0;
+            
+            spawnPoints.forEach(point => {
+                const dist = Math.sqrt(Math.pow(point.x - player.x, 2) + Math.pow(point.y - player.y, 2));
+                if (dist > maxDist) {
+                    maxDist = dist;
+                    bestPoint = point;
+                }
+            });
+            
+            enemies.push(new Enemy(bestPoint.x, bestPoint.y));
+            createParticles(bestPoint.x, bestPoint.y, colors.neonPurple, 10, 5);
+        }
+
+        // Controles
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+            
+            if (e.key.toLowerCase() === 'r' && game.over) {
+                resetGame();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mousedown', () => {
+            mouse.pressed = true;
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            mouse.pressed = false;
+        });
+
+        // Reset do jogo
+        function resetGame() {
+            player.health = player.maxHealth;
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.trail = [];
+            player.currentAction = 'idle';
+            player.wheelieTime = 0;
+            game.score = 0;
+            game.combo = 1;
+            game.over = false;
+            game.screenShake = 0;
+            game.deathZoom = 1;
+            enemies.length = 0;
+            projectiles.length = 0;
+            particles.length = 0;
+            corpses.length = 0;
+            game.bloodParticles.length = 0;
+            document.getElementById('gameOver').style.display = 'none';
+        }
+
+        // Game loop
+        function update() {
+            if (game.over) return;
+            
+            game.time++;
+
+            // Movimento do jogador
+            let dx = 0, dy = 0;
+            if (keys['w'] || keys['arrowup']) dy = -1;
+            if (keys['s'] || keys['arrowdown']) dy = 1;
+            if (keys['a'] || keys['arrowleft']) dx = -1;
+            if (keys['d'] || keys['arrowright']) dx = 1;
+            
+            // Atualiza direção baseada no movimento
+            if (dx > 0) player.direction = 0;      // Direita
+            else if (dy > 0) player.direction = 1; // Baixo
+            else if (dx < 0) player.direction = 2; // Esquerda
+            else if (dy < 0) player.direction = 3; // Cima
+            
+            // Normaliza movimento diagonal
+            if (dx !== 0 && dy !== 0) {
+                dx *= 0.707;
+                dy *= 0.707;
+            }
+            
+            // Verifica se está se movendo
+            player.isMoving = (dx !== 0 || dy !== 0);
+            
+            // Wheelie (Shift segurando)
+            if (keys['shift'] && player.onBike && player.isMoving) {
+                player.currentAction = 'wheelie';
+                player.wheelieTime++;
+                currentSpeed = player.speed * 1.5; // Mais rápido no wheelie
+                createParticles(player.x, player.y, colors.neonBlue, 2, 3);
+            } else {
+                if (player.wheelieTime > 0) {
+                    // Bônus por wheelie longo
+                    if (player.wheelieTime > 60) {
+                        game.score += 50;
+                        createParticles(player.x, player.y, colors.neonPink, 20, 8);
+                    }
+                }
+                player.wheelieTime = 0;
+                
+                // Define ação atual
+                if (player.health <= 0) {
+                    player.currentAction = 'death';
+                } else if (player.isMoving) {
+                    player.currentAction = 'ride';
+                } else {
+                    player.currentAction = 'idle';
+                }
+            }
+            
+            // Dash (Space)
+            let currentSpeed = player.speed;
+            if (keys[' '] && player.dashCooldown <= 0 && player.onBike) {
+                currentSpeed = player.dashSpeed;
+                player.dashCooldown = 30;
+                createParticles(player.x, player.y, colors.player, 10, 5);
+                
+                // Atropela inimigos durante dash
+                enemies.forEach((enemy, index) => {
+                    const dx = enemy.x - player.x;
+                    const dy = enemy.y - player.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < enemy.size + player.size + 10) {
+                        enemy.health = 0;
+                        corpses.push({
+                            x: enemy.x,
+                            y: enemy.y,
+                            angle: enemy.angle,
+                            size: enemy.size,
+                            color: enemy.color
+                        });
+                        enemies.splice(index, 1);
+                        game.score += 200 * game.combo;
+                        game.combo = Math.min(game.combo + 1, 10);
+                        game.comboTimer = 120;
+                        createBloodSplatter(enemy.x, enemy.y, 30);
+                        createParticles(enemy.x, enemy.y, colors.neonPink, 30, 12);
+                        game.screenShake = 15;
+                    }
+                });
+            }
+            
+            player.x += dx * currentSpeed;
+            player.y += dy * currentSpeed;
+            
+            if (player.dashCooldown > 0) player.dashCooldown--;
+
+            // Trail do jogador
+            if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
+                player.trail.push({ 
+                    x: player.x, 
+                    y: player.y,
+                    angle: player.angle
+                });
+                if (player.trail.length > 10) {
+                    player.trail.shift();
+                }
+            }
+
+            // Ângulo do jogador
+            player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+
+            // Limites da tela
+            player.x = Math.max(player.size, Math.min(canvas.width - player.size, player.x));
+            player.y = Math.max(player.size, Math.min(canvas.height - player.size, player.y));
+
+            // Ataque
+            if (mouse.pressed && player.attackCooldown <= 0) {
+                projectiles.push(new Projectile(player.x, player.y, player.angle));
+                player.attackCooldown = 8;
+                game.screenShake = 3;
+                
+                // Recuo
+                player.x -= Math.cos(player.angle) * 3;
+                player.y -= Math.sin(player.angle) * 3;
+            }
+            
+            if (player.attackCooldown > 0) player.attackCooldown--;
+            if (player.invulnerable > 0) player.invulnerable--;
+
+            // Combo timer
+            if (game.comboTimer > 0) {
+                game.comboTimer--;
+            } else {
+                game.combo = 1;
+            }
+
+            // Screen shake decay
+            if (game.screenShake > 0) game.screenShake *= 0.9;
+
+            // Atualiza inimigos
+            enemies.forEach(enemy => enemy.update());
+
+            // Atualiza projéteis
+            projectiles.forEach((projectile, index) => {
+                if (projectile.update()) {
+                    projectiles.splice(index, 1);
+                }
+            });
+
+            // Atualiza partículas
+            particles.forEach((particle, index) => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.vx *= 0.95;
+                particle.vy *= 0.95;
+                particle.life--;
+                
+                if (particle.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+
+            // Spawn de inimigos (aumenta com o tempo)
+            const spawnRate = Math.min(0.02 + (game.time / 10000), 0.05);
+            if (Math.random() < spawnRate) {
+                spawnEnemy();
+            }
+
+            // Game over com zoom dramático
+            if (player.health <= 0 && !game.over) {
+                game.over = true;
+                player.currentAction = 'death';
+                // Define ponto focal do zoom na posição da morte
+                game.cameraX = player.x;
+                game.cameraY = player.y;
+                // Cria explosão de partículas na morte
+                createBloodSplatter(player.x, player.y, 50);
+                createParticles(player.x, player.y, colors.enemy, 30, 15);
+                
+                // Delay para mostrar game over
+                setTimeout(() => {
+                    document.getElementById('gameOver').style.display = 'block';
+                }, 2000);
+            }
+            
+            // Anima zoom da morte
+            if (game.over && game.deathZoom < game.deathZoomTarget) {
+                game.deathZoom += 0.02;
+            }
+
+            // Atualiza UI
+            document.getElementById('healthBar').style.width = (player.health / player.maxHealth * 100) + '%';
+            document.getElementById('score').textContent = game.score;
+            document.getElementById('combo').textContent = game.combo;
+        }
+
+        function draw() {
+            // Salva estado do canvas
+            ctx.save();
+            
+            // Aplica zoom dramático na morte
+            if (game.over) {
+                // Calcula centro do zoom
+                const zoomCenterX = game.cameraX;
+                const zoomCenterY = game.cameraY;
+                
+                // Translada para o centro, aplica zoom, volta
+                ctx.translate(canvas.width/2, canvas.height/2);
+                ctx.scale(game.deathZoom, game.deathZoom);
+                ctx.translate(-zoomCenterX, -zoomCenterY);
+            } else if (game.screenShake > 1) {
+                // Screen shake normal (não na morte)
+                ctx.translate(
+                    (Math.random() - 0.5) * game.screenShake,
+                    (Math.random() - 0.5) * game.screenShake
+                );
+            }
+
+            // Limpa canvas com cor de fundo
+            ctx.fillStyle = colors.floor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Padrão de piso
+            ctx.strokeStyle = '#1a0033';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Sangue no chão
+            ctx.globalAlpha = 0.7;
+            game.bloodParticles.forEach(blood => {
+                ctx.fillStyle = blood.color;
+                ctx.beginPath();
+                ctx.arc(blood.x, blood.y, blood.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1;
+
+            // Desenha mapa/paredes
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = colors.neonPurple;
+            for (let y = 0; y < map.length; y++) {
+                for (let x = 0; x < map[y].length; x++) {
+                    if (map[y][x] === 1) {
+                        ctx.fillStyle = colors.wall;
+                        ctx.fillRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);
+                        
+                        // Borda neon
+                        ctx.strokeStyle = colors.neonPurple;
+                        ctx.strokeRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);
+                    }
+                }
+            }
+            ctx.shadowBlur = 0;
+
+            // Desenha corpos
+            ctx.globalAlpha = 0.5;
+            corpses.forEach(corpse => {
+                ctx.save();
+                ctx.translate(corpse.x, corpse.y);
+                ctx.rotate(corpse.angle + Math.PI / 2);
+                ctx.fillStyle = '#330011';
+                ctx.fillRect(-corpse.size/2, -corpse.size/2, corpse.size, corpse.size);
+                ctx.restore();
+            });
+            ctx.globalAlpha = 1;
+
+            // Desenha partículas
+            particles.forEach(particle => {
+                ctx.globalAlpha = particle.life / particle.maxLife;
+                ctx.fillStyle = particle.color;
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = particle.color;
+                ctx.fillRect(particle.x - particle.size/2, particle.y - particle.size/2, particle.size, particle.size);
+            });
+            ctx.globalAlpha = 1;
+            ctx.shadowBlur = 0;
+
+            // Desenha inimigos
+            enemies.forEach(enemy => enemy.draw());
+
+            // Desenha projéteis
+            projectiles.forEach(projectile => projectile.draw());
+
+            // Desenha trail do jogador
+            player.trail.forEach((point, index) => {
+                ctx.globalAlpha = index / player.trail.length * 0.5;
+                ctx.fillStyle = colors.player;
+                ctx.save();
+                ctx.translate(point.x, point.y);
+                ctx.rotate(point.angle);
+                ctx.fillRect(-player.size/3, -player.size/3, player.size/1.5, player.size/1.5);
+                ctx.restore();
+            });
+            ctx.globalAlpha = 1;
+
+            // Desenha jogador
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // Rotação suave para a mira (só visual, não afeta o sprite)
+            const displayAngle = player.angle;
+            
+            // Pisca quando invulnerável
+            if (player.invulnerable % 10 < 5) {
+                // Se tem sprite do Mad Max, usa sprite
+                if (sprites.loaded && sprites.player[player.currentAction]) {
+                    const spriteArray = sprites.player[player.currentAction];
+                    const sprite = spriteArray[player.direction];
+                    
+                    if (sprite && sprite.complete) {
+                        // Desenha o sprite do Mad Max
+                        ctx.drawImage(
+                            sprite,
+                            -32, -32,  // Centraliza o sprite de 64x64
+                            64, 64
+                        );
+                    }
+                } else {
+                    // Fallback para desenho procedural
+                    ctx.rotate(displayAngle);
+                    
+                    // Glow
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = player.color;
+                    
+                    // Corpo do jogador (design cyberpunk)
+                    ctx.fillStyle = player.color;
+                    ctx.beginPath();
+                    ctx.moveTo(player.size/2, 0);
+                    ctx.lineTo(-player.size/3, -player.size/3);
+                    ctx.lineTo(-player.size/2, 0);
+                    ctx.lineTo(-player.size/3, player.size/3);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Detalhe central
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(-2, -2, 8, 4);
+                }
+                
+                // Linha de mira (sempre aparece)
+                ctx.rotate(displayAngle);
+                ctx.strokeStyle = colors.neonBlue;
+                ctx.globalAlpha = 0.5;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(player.size/2, 0);
+                ctx.lineTo(player.size * 2, 0);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+            }
+            
+            ctx.restore();
+            
+            // UI do Wheelie
+            if (player.currentAction === 'wheelie' && player.wheelieTime > 30) {
+                ctx.fillStyle = colors.neonPink;
+                ctx.font = 'bold 24px Orbitron';
+                ctx.textAlign = 'center';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = colors.neonPink;
+                ctx.fillText('WHEELIE!', player.x, player.y - 50);
+                ctx.shadowBlur = 0;
+            }
+
+            // Efeito de scanlines
+            ctx.globalAlpha = 0.05;
+            for (let y = 0; y < canvas.height; y += 4) {
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(0, y, canvas.width, 2);
+            }
+            ctx.globalAlpha = 1;
+
+            // Vinheta
+            const gradient = ctx.createRadialGradient(
+                canvas.width/2, canvas.height/2, 0,
+                canvas.width/2, canvas.height/2, canvas.width/2
+            );
+            gradient.addColorStop(0, 'rgba(0,0,0,0)');
+            gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Inicia o jogo
+        gameLoop();
+    </script>
 </body>
 </html>
