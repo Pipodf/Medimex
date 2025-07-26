@@ -107,7 +107,7 @@
             <span style="font-size: 24px">Pressione R para reiniciar</span>
         </div>
         <div id="instructions">
-            WASD: MOVER | MOUSE: MIRAR | CLIQUE: ATIRAR | SHIFT: WHEELIE | ESPAÇO: DASH/ATROPELAR
+            WASD: MOVER | MOUSE: MIRAR | CLIQUE: ATIRAR | ESPAÇO: DASH/ATROPELAR
         </div>
     </div>
 
@@ -289,7 +289,12 @@
             eCtx.arc(32, 32, 20, 0, Math.PI * 2);
             eCtx.fill();
             
-            const enemyGlow = '#ff3366',  // Rosa mais claro para visibilidade</            sprites.enemy = enemyCanvas;
+            eCtx.fillStyle = colors.enemy;
+            eCtx.beginPath();
+            eCtx.arc(32, 32, 20, 0, Math.PI * 2);
+            eCtx.fill();
+            
+            sprites.enemy = enemyCanvas;
         }
 
         // Carrega sprites ao iniciar
@@ -316,7 +321,6 @@
             currentAction: 'idle',  // idle, ride, wheelie, death
             direction: 0,          // 0=direita, 1=baixo, 2=esquerda, 3=cima
             isMoving: false,
-            wheelieTime: 0,
             onBike: true
         };
 
@@ -803,7 +807,6 @@
             player.y = canvas.height / 2;
             player.trail = [];
             player.currentAction = 'idle';
-            player.wheelieTime = 0;
             game.score = 0;
             game.combo = 1;
             game.over = false;
@@ -845,37 +848,21 @@
             // Verifica se está se movendo
             player.isMoving = (dx !== 0 || dy !== 0);
             
-            // Wheelie (Shift segurando)
-            let currentSpeed = player.speed;
-            if (keys['shift'] && player.onBike && player.isMoving) {
-                player.currentAction = 'wheelie';
-                player.wheelieTime++;
-                currentSpeed = player.speed * 1.5; // Mais rápido no wheelie
-                createParticles(player.x, player.y, colors.neonBlue, 2, 3);
+            // Define ação atual
+            if (player.health <= 0) {
+                player.currentAction = 'death';
+            } else if (player.isMoving) {
+                player.currentAction = 'ride';
             } else {
-                if (player.wheelieTime > 0) {
-                    // Bônus por wheelie longo
-                    if (player.wheelieTime > 60) {
-                        game.score += 50;
-                        createParticles(player.x, player.y, colors.neonPink, 20, 8);
-                    }
-                }
-                player.wheelieTime = 0;
-                
-                // Define ação atual
-                if (player.health <= 0) {
-                    player.currentAction = 'death';
-                } else if (player.isMoving) {
-                    player.currentAction = 'ride';
-                } else {
-                    player.currentAction = 'idle';
-                }
+                player.currentAction = 'idle';
             }
             
-            // Dash (Space)
+            // Dash (Space) - Usa sprite de wheelie para atropelar
+            let currentSpeed = player.speed;
             if (keys[' '] && player.dashCooldown <= 0 && player.onBike) {
                 currentSpeed = player.dashSpeed;
                 player.dashCooldown = 30;
+                player.currentAction = 'wheelie'; // Usa animação de wheelie no dash
                 createParticles(player.x, player.y, colors.player, 10, 5);
                 
                 // Atropela inimigos durante dash
@@ -1198,16 +1185,7 @@
             
             ctx.restore();
             
-            // UI do Wheelie
-            if (player.currentAction === 'wheelie' && player.wheelieTime > 30) {
-                ctx.fillStyle = colors.neonPink;
-                ctx.font = 'bold 24px Orbitron';
-                ctx.textAlign = 'center';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = colors.neonPink;
-                ctx.fillText('WHEELIE!', player.x, player.y - 50);
-                ctx.shadowBlur = 0;
-            }
+            // Efeito de scanlines
 
             // Desenha saída do nível
             const level = levels[game.currentLevel];
