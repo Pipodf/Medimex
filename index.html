@@ -182,8 +182,8 @@
             screenShake: 0,
             time: 0,
             bloodParticles: [],
-            deathZoom: 1,
-            deathZoomTarget: 3,  // Zoom mais dramático
+            deathRotation: 0,     // Rotação na morte
+            deathRotationSpeed: 0.05, // Velocidade de rotação
             cameraX: 0,
             cameraY: 0,
             currentLevel: 0,  // Nível atual
@@ -208,14 +208,27 @@
         const sprites = {
             loaded: false,
             loadedCount: 0,
-            totalSprites: 16,
+            totalSprites: 48,  // 16 mad max + 16 janis + 16 janis2
             player: {
                 idle: [],      // Frames 0-3 (uma pose por direção)
                 ride: [],      // Frames 4-7 e 0-3 alternando (pedalar)
                 wheelie: [],   // Frames 8-11
                 death: []      // Frames 12-15
             },
-            enemy: null
+            enemies: {
+                janis: {
+                    idle: [],
+                    ride: [],
+                    wheelie: [],  // Armado quando vê o player
+                    death: []
+                },
+                janis2: {
+                    idle: [],
+                    ride: [],
+                    wheelie: [],  // Armado quando vê o player
+                    death: []
+                }
+            }
         };
 
         // Carrega sprites do Mad Max
@@ -364,8 +377,8 @@
             size: 24,
             speed: 5,
             dashSpeed: 15,
-            health: 100,
-            maxHealth: 100,
+            health: 3,
+            maxHealth: 3,
             color: colors.player,
             attacking: false,
             attackCooldown: 0,
@@ -409,8 +422,8 @@
                 playerStart: { x: 100, y: 320 },
                 exit: { x: 860, y: 320, width: 60, height: 100 },
                 enemies: [
-                    { x: 400, y: 200 },
-                    { x: 600, y: 400 }
+                    { x: 400, y: 200, type: 'janis' },
+                    { x: 600, y: 400, type: 'janis2' }
                 ],
                 message: "Cuidado! Guardas à frente!"
             }
@@ -470,20 +483,25 @@
 
         // Classe de inimigo melhorada
         class Enemy {
-            constructor(x, y) {
+            constructor(x, y, type = 'janis') {
                 this.x = x;
                 this.y = y;
                 this.size = 20;
                 this.speed = 2 + Math.random();
-                this.health = 30;
-                this.maxHealth = 30;
+                this.health = 2;  // 2 hits para matar
+                this.maxHealth = 2;
                 this.color = '#ff00ff';  // FORÇA cor neon
                 this.angle = 0;
-                this.type = Math.random() > 0.7 ? 'rusher' : 'normal';
+                this.type = type;  // 'janis' ou 'janis2'
+                this.behavior = Math.random() > 0.7 ? 'rusher' : 'normal';
                 this.glowIntensity = 0;
                 this.hitFlash = 0;
                 this.active = false;
                 this.detectionRange = 150;
+                this.currentAction = 'idle';
+                this.direction = 0;
+                this.animFrame = 0;
+                this.animTimer = 0;
             }
 
             update() {
@@ -497,23 +515,45 @@
                 // Ativa inimigo quando player chega perto E tem linha de visão
                 if (!this.active && distance < this.detectionRange && hasLineOfSight) {
                     this.active = true;
+                    this.currentAction = 'wheelie'; // Fica armado!
                     createParticles(this.x, this.y, colors.neonPink, 10, 5);
                 }
                 
+                // Atualiza direção
+                if (dx > 0) this.direction = 0;      // Direita
+                else if (dy > 0) this.direction = 1; // Baixo
+                else if (dx < 0) this.direction = 2; // Esquerda
+                else if (dy < 0) this.direction = 3; // Cima
+                
                 // Só se move se estiver ativo
                 if (this.active && distance > 0) {
-                    const moveSpeed = this.type === 'rusher' ? this.speed * 1.5 : this.speed;
+                    const moveSpeed = this.behavior === 'rusher' ? this.speed * 1.5 : this.speed;
                     
                     // Movimento com colisão
                     const nextX = this.x + (dx / distance) * moveSpeed;
                     const nextY = this.y + (dy / distance) * moveSpeed;
                     
                     // Verifica colisão com paredes
+                    let moved = false;
                     if (!checkWallCollision(nextX, this.y, this.size)) {
                         this.x = nextX;
+                        moved = true;
                     }
                     if (!checkWallCollision(this.x, nextY, this.size)) {
                         this.y = nextY;
+                        moved = true;
+                    }
+                    
+                    // Se está se movendo, anima
+                    if (moved && this.active) {
+                        this.currentAction = 'ride';
+                        this.animTimer++;
+                        if (this.animTimer > 6) {
+                            this.animTimer = 0;
+                            this.animFrame = (this.animFrame + 1) % 2;
+                        }
+                    } else if (this.active) {
+                        this.currentAction = 'wheelie'; // Volta a ficar armado se parado
                     }
                     
                     this.angle = Math.atan2(dy, dx);
@@ -521,7 +561,7 @@
 
                 // Colisão com o jogador
                 if (distance < this.size + player.size && player.invulnerable <= 0) {
-                    player.health -= 10;
+                    player.health -= 1;  // Perde 1 vida por hit
                     player.invulnerable = 60;
                     game.screenShake = 10;
                     createBloodSplatter(player.x, player.y, 20);
@@ -562,74 +602,96 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
                 
-                // Se tem sprite, usa sprite
-                if (sprites.loaded && sprites.enemy) {
-                    // Flash quando atingido
-                    if (this.hitFlash > 0) {
-                        ctx.filter = 'brightness(2)';
-                    }
+                // Tenta usar sprites do Janis
+                if (sprites.loaded && sprites.enemies[this.type] && sprites.enemies[this.type][this.currentAction]) {
+                    const spriteArray = sprites.enemies[this.type][this.currentAction];
+                    let sprite;
                     
-                    ctx.drawImage(
-                        sprites.enemy,
-                        -32, -32, // Centraliza o sprite
-                        64, 64
-                    );
-                    
-                    ctx.filter = 'none';
-                } else {
-                    // Desenho humanóide procedural NEON
-                    // Glow effect MUITO FORTE
-                    ctx.shadowBlur = 30;
-                    ctx.shadowColor = colors.enemyGlow;
-                    
-                    // Flash quando atingido
-                    if (this.hitFlash > 0) {
-                        ctx.fillStyle = '#ffffff';
+                    // Se está andando, usa animação
+                    if (this.currentAction === 'ride') {
+                        const frameIndex = this.direction * 2 + this.animFrame;
+                        sprite = spriteArray[frameIndex] || spriteArray[this.direction];
                     } else {
-                        ctx.fillStyle = colors.enemyGlow;
+                        sprite = spriteArray[this.direction];
                     }
                     
-                    // Corpo (tronco) - NEON
-                    ctx.fillRect(-8, -12, 16, 20);
-                    
-                    // Cabeça - NEON
-                    ctx.beginPath();
-                    ctx.arc(0, -12, 8, 0, Math.PI * 2);
-                    ctx.fill();
-                    
-                    // Braços - NEON
-                    ctx.fillRect(-12, -8, 4, 12);
-                    ctx.fillRect(8, -8, 4, 12);
-                    
-                    // Pernas - NEON
-                    ctx.fillRect(-6, 8, 5, 10);
-                    ctx.fillRect(1, 8, 5, 10);
-                    
-                    // Olhos brilhantes (sempre visíveis)
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = '#ffffff';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fillRect(-3, -14, 2, 3);
-                    ctx.fillRect(1, -14, 2, 3);
-                    
-                    // Contorno NEON extra brilhante
-                    ctx.shadowBlur = 15;
-                    ctx.shadowColor = colors.neonPink;
-                    ctx.strokeStyle = colors.neonPink;
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(-8, -12, 16, 20);
-                    
-                    // Aura neon quando ativo
-                    if (this.active) {
-                        ctx.globalAlpha = 0.5;
-                        ctx.shadowBlur = 40;
-                        ctx.strokeStyle = colors.neonBlue;
-                        ctx.strokeRect(-12, -16, 24, 28);
-                        ctx.globalAlpha = 1;
+                    if (sprite && sprite.complete) {
+                        // Flash quando atingido
+                        if (this.hitFlash > 0) {
+                            ctx.filter = 'brightness(2)';
+                        }
+                        
+                        ctx.drawImage(sprite, -32, -32, 64, 64);
+                        ctx.filter = 'none';
+                    } else {
+                        this.drawProcedural(); // Fallback
                     }
+                } else {
+                    this.drawProcedural(); // Fallback
                 }
                 
                 ctx.restore();
+            }
+            
+            drawProcedural() {
+                // Desenho humanóide procedural NEON (fallback)
+                const ctx = this.ctx || window.ctx;
+                
+                // Glow effect MUITO FORTE
+                ctx.shadowBlur = 30;
+                ctx.shadowColor = colors.enemyGlow;
+                
+                // Flash quando atingido
+                if (this.hitFlash > 0) {
+                    ctx.fillStyle = '#ffffff';
+                } else {
+                    ctx.fillStyle = colors.enemyGlow;
+                }
+                
+                // Corpo (tronco) - NEON
+                ctx.fillRect(-8, -12, 16, 20);
+                
+                // Cabeça - NEON
+                ctx.beginPath();
+                ctx.arc(0, -12, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Braços - NEON
+                ctx.fillRect(-12, -8, 4, 12);
+                ctx.fillRect(8, -8, 4, 12);
+                
+                // Se está armado, desenha arma
+                if (this.currentAction === 'wheelie') {
+                    ctx.fillStyle = '#ffff00';
+                    ctx.fillRect(10, -6, 15, 3);
+                }
+                
+                // Pernas - NEON
+                ctx.fillRect(-6, 8, 5, 10);
+                ctx.fillRect(1, 8, 5, 10);
+                
+                // Olhos brilhantes (sempre visíveis)
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#ffffff';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(-3, -14, 2, 3);
+                ctx.fillRect(1, -14, 2, 3);
+                
+                // Contorno NEON extra brilhante
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = colors.neonPink;
+                ctx.strokeStyle = colors.neonPink;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-8, -12, 16, 20);
+                
+                // Aura neon quando ativo
+                if (this.active) {
+                    ctx.globalAlpha = 0.5;
+                    ctx.shadowBlur = 40;
+                    ctx.strokeStyle = colors.neonBlue;
+                    ctx.strokeRect(-12, -16, 24, 28);
+                    ctx.globalAlpha = 1;
+                }
             }
         }
 
@@ -795,7 +857,7 @@
             
             // Spawna inimigos do nível
             level.enemies.forEach(enemyData => {
-                const enemy = new Enemy(enemyData.x, enemyData.y);
+                const enemy = new Enemy(enemyData.x, enemyData.y, enemyData.type || 'janis');
                 enemies.push(enemy);
             });
             
@@ -837,7 +899,7 @@
                 }
             });
             
-            enemies.push(new Enemy(bestPoint.x, bestPoint.y));
+            enemies.push(new Enemy(bestPoint.x, bestPoint.y, Math.random() > 0.5 ? 'janis' : 'janis2'));
             createParticles(bestPoint.x, bestPoint.y, colors.neonPurple, 10, 5);
         }
 
@@ -879,7 +941,8 @@
             game.combo = 1;
             game.over = false;
             game.screenShake = 0;
-            game.deathZoom = 1;
+            game.deathRotation = 0;
+            game.deathRotationSpeed = 0.05;
             enemies.length = 0;
             projectiles.length = 0;
             particles.length = 0;
@@ -1086,11 +1149,11 @@
                 spawnEnemy();
             }
 
-            // Game over com zoom dramático FORÇADO
+            // Game over com ROTAÇÃO dramática
             if (player.health <= 0 && !game.over) {
                 game.over = true;
                 player.currentAction = 'death';
-                // Define ponto focal do zoom na posição da morte
+                // Define ponto focal na posição da morte
                 game.cameraX = player.x;
                 game.cameraY = player.y;
                 // Cria explosão de partículas na morte
@@ -1098,9 +1161,9 @@
                 createParticles(player.x, player.y, colors.enemy, 30, 15);
                 game.screenShake = 20;
                 
-                // Força início do zoom
-                game.deathZoom = 1.5;
-                console.log('MORTE! Iniciando zoom em:', game.cameraX, game.cameraY);
+                // Inicia rotação
+                game.deathRotation = 0;
+                console.log('MORTE! Iniciando rotação');
                 
                 // Delay para mostrar game over
                 setTimeout(() => {
@@ -1108,9 +1171,13 @@
                 }, 2000);
             }
             
-            // Anima zoom da morte MAIS RÁPIDO
-            if (game.over && game.deathZoom < game.deathZoomTarget) {
-                game.deathZoom += 0.05;  // Zoom mais rápido
+            // Anima rotação da morte
+            if (game.over) {
+                game.deathRotation += game.deathRotationSpeed;
+                // Desacelera a rotação
+                if (game.deathRotationSpeed > 0.001) {
+                    game.deathRotationSpeed *= 0.98;
+                }
             }
 
             // Atualiza UI
@@ -1123,19 +1190,18 @@
             // Salva estado do canvas
             ctx.save();
             
-            // ZOOM DRAMÁTICO NA MORTE - FORÇADO
+            // ROTAÇÃO DRAMÁTICA NA MORTE
             if (game.over) {
-                const zoomCenterX = game.cameraX || player.x;
-                const zoomCenterY = game.cameraY || player.y;
-                const currentZoom = game.deathZoom || 1;
-                
-                // Aplica transformações na ordem correta
+                // Rotaciona em torno do centro da tela
                 ctx.translate(canvas.width/2, canvas.height/2);
-                ctx.scale(currentZoom, currentZoom);
-                ctx.translate(-zoomCenterX, -zoomCenterY);
+                ctx.rotate(game.deathRotation);
+                ctx.translate(-canvas.width/2, -canvas.height/2);
                 
-                // Debug do zoom
-                console.log(`Zoom: ${currentZoom}, Centro: ${zoomCenterX}, ${zoomCenterY}`);
+                // Adiciona um leve zoom também
+                const zoom = 1 + (game.deathRotation / 10);
+                ctx.translate(canvas.width/2, canvas.height/2);
+                ctx.scale(zoom, zoom);
+                ctx.translate(-game.cameraX, -game.cameraY);
             } else if (game.screenShake > 1) {
                 // Screen shake normal (não na morte)
                 ctx.translate(
@@ -1339,6 +1405,14 @@
             ctx.font = 'bold 16px Orbitron';
             ctx.textAlign = 'right';
             ctx.fillText(`NÍVEL ${game.currentLevel + 1}: ${level.name}`, canvas.width - 20, 40);
+            
+            // UI de vida (só 3 corações)
+            ctx.save();
+            ctx.fillStyle = colors.neonPink;
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('❤️'.repeat(player.health), 20, 90);
+            ctx.restore();
             
             // Mensagem se precisa matar inimigos
             if (level.exit && enemies.length > 0) {
