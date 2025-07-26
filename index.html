@@ -131,9 +131,11 @@
             time: 0,
             bloodParticles: [],
             deathZoom: 1,
-            deathZoomTarget: 2.5,
+            deathZoomTarget: 3,  // Zoom mais dramático
             cameraX: 0,
-            cameraY: 0
+            cameraY: 0,
+            currentLevel: 0,  // Nível atual
+            levelComplete: false
         };
 
         // Paleta de cores neon
@@ -146,7 +148,8 @@
             floor: '#0d001a',
             neonBlue: '#00ffff',
             neonPink: '#ff00ff',
-            neonPurple: '#9945ff'
+            neonPurple: '#9945ff',
+            enemyGlow: '#ff3366'  // Cor mais clara para inimigos
         };
 
         // Sistema de Sprites
@@ -327,39 +330,80 @@
         const particles = [];
         const corpses = [];
 
+        // Sistema de níveis
+        const levels = [
+            {
+                // Nível 1: Entrada
+                name: "Entrada do Território",
+                playerStart: { x: 100, y: 320 },
+                exit: { x: 860, y: 320, width: 60, height: 100 },
+                enemies: [],  // Sem inimigos no primeiro nível
+                message: "Entre no território inimigo..."
+            },
+            {
+                // Nível 2: Primeiro Confronto
+                name: "Zona de Patrulha",
+                playerStart: { x: 100, y: 320 },
+                exit: { x: 860, y: 320, width: 60, height: 100 },
+                enemies: [
+                    { x: 400, y: 200 },
+                    { x: 600, y: 400 }
+                ],
+                message: "Cuidado! Guardas à frente!"
+            }
+        ];
+
         // Mapa melhorado
         const tileSize = 32;
         const mapWidth = Math.floor(canvas.width / tileSize);
         const mapHeight = Math.floor(canvas.height / tileSize);
-        const map = [];
+        let map = [];
 
-        // Gera mapa
-        for (let y = 0; y < mapHeight; y++) {
-            map[y] = [];
-            for (let x = 0; x < mapWidth; x++) {
-                if (x === 0 || y === 0 || x === mapWidth - 1 || y === mapHeight - 1) {
-                    map[y][x] = 1;
-                } else {
-                    map[y][x] = 0;
+        // Função para gerar mapa do nível
+        function generateLevelMap(levelIndex) {
+            map = [];
+            
+            // Cria bordas
+            for (let y = 0; y < mapHeight; y++) {
+                map[y] = [];
+                for (let x = 0; x < mapWidth; x++) {
+                    if (x === 0 || y === 0 || x === mapWidth - 1 || y === mapHeight - 1) {
+                        map[y][x] = 1;
+                    } else {
+                        map[y][x] = 0;
+                    }
                 }
             }
-        }
-
-        // Adiciona obstáculos com design
-        for (let i = 0; i < 15; i++) {
-            const x = Math.floor(Math.random() * (mapWidth - 4)) + 2;
-            const y = Math.floor(Math.random() * (mapHeight - 4)) + 2;
-            const w = Math.floor(Math.random() * 3) + 1;
-            const h = Math.floor(Math.random() * 3) + 1;
             
-            for (let dy = 0; dy < h; dy++) {
-                for (let dx = 0; dx < w; dx++) {
-                    if (x + dx < mapWidth - 1 && y + dy < mapHeight - 1) {
-                        map[y + dy][x + dx] = 1;
+            // Adiciona obstáculos baseado no nível
+            if (levelIndex === 0) {
+                // Nível 1: Corredor simples
+                for (let y = 5; y < mapHeight - 5; y++) {
+                    if (y < 8 || y > 11) {
+                        map[y][Math.floor(mapWidth / 2)] = 1;
+                    }
+                }
+            } else {
+                // Outros níveis: obstáculos aleatórios
+                for (let i = 0; i < 10 + levelIndex * 3; i++) {
+                    const x = Math.floor(Math.random() * (mapWidth - 4)) + 2;
+                    const y = Math.floor(Math.random() * (mapHeight - 4)) + 2;
+                    const w = Math.floor(Math.random() * 3) + 1;
+                    const h = Math.floor(Math.random() * 3) + 1;
+                    
+                    for (let dy = 0; dy < h; dy++) {
+                        for (let dx = 0; dx < w; dx++) {
+                            if (x + dx < mapWidth - 1 && y + dy < mapHeight - 1) {
+                                map[y + dy][x + dx] = 1;
+                            }
+                        }
                     }
                 }
             }
         }
+
+        // Inicializa o primeiro nível
+        generateLevelMap(0);
 
         // Classe de inimigo melhorada
         class Enemy {
@@ -370,11 +414,13 @@
                 this.speed = 2 + Math.random();
                 this.health = 30;
                 this.maxHealth = 30;
-                this.color = colors.enemy;
+                this.color = colors.enemyGlow;  // Cor mais clara
                 this.angle = 0;
                 this.type = Math.random() > 0.7 ? 'rusher' : 'normal';
                 this.glowIntensity = 0;
                 this.hitFlash = 0;
+                this.active = false;  // Inimigo inativo até player chegar perto
+                this.detectionRange = 150;  // Distância de detecção
             }
 
             update() {
@@ -382,7 +428,14 @@
                 const dy = player.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                if (distance > 0) {
+                // Ativa inimigo quando player chega perto
+                if (!this.active && distance < this.detectionRange) {
+                    this.active = true;
+                    createParticles(this.x, this.y, colors.neonPink, 10, 5);
+                }
+                
+                // Só se move se estiver ativo
+                if (this.active && distance > 0) {
                     const moveSpeed = this.type === 'rusher' ? this.speed * 1.5 : this.speed;
                     this.x += (dx / distance) * moveSpeed;
                     this.y += (dy / distance) * moveSpeed;
@@ -427,24 +480,27 @@
                     ctx.filter = 'none';
                 } else {
                     // Fallback para desenho procedural
-                    // Glow effect
-                    ctx.shadowBlur = 20 + this.glowIntensity * 10;
-                    ctx.shadowColor = this.color;
+                    // Glow effect mais forte
+                    ctx.shadowBlur = 30 + this.glowIntensity * 15;
+                    ctx.shadowColor = this.active ? colors.neonPink : this.color;
                     
                     // Flash quando atingido
                     if (this.hitFlash > 0) {
                         ctx.fillStyle = '#ffffff';
                     } else {
-                        ctx.fillStyle = this.color;
+                        ctx.fillStyle = this.active ? colors.neonPink : this.color;
                     }
                     
-                    // Corpo do inimigo (formato mais interessante)
+                    // Corpo do inimigo com borda brilhante
+                    ctx.strokeStyle = colors.neonPink;
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.moveTo(-this.size/2, -this.size/2);
                     ctx.lineTo(this.size/2, 0);
                     ctx.lineTo(-this.size/2, this.size/2);
                     ctx.closePath();
                     ctx.fill();
+                    ctx.stroke();
                     
                     // Olho
                     ctx.shadowBlur = 0;
@@ -582,8 +638,41 @@
             }
         }
 
-        // Spawn de inimigos melhorado
+        // Carrega nível
+        function loadLevel(levelIndex) {
+            const level = levels[levelIndex];
+            
+            // Reseta estado
+            enemies.length = 0;
+            projectiles.length = 0;
+            particles.length = 0;
+            corpses.length = 0;
+            game.bloodParticles.length = 0;
+            game.levelComplete = false;
+            
+            // Posiciona jogador
+            player.x = level.playerStart.x;
+            player.y = level.playerStart.y;
+            player.health = player.maxHealth;
+            
+            // Gera mapa do nível
+            generateLevelMap(levelIndex);
+            
+            // Spawna inimigos do nível
+            level.enemies.forEach(enemyData => {
+                const enemy = new Enemy(enemyData.x, enemyData.y);
+                enemies.push(enemy);
+            });
+            
+            // Mostra mensagem do nível
+            console.log(`🎮 ${level.message}`);
+        }
+
+        // Spawn de inimigos melhorado (só em níveis específicos)
         function spawnEnemy() {
+            // Só spawna automaticamente após nível 2
+            if (game.currentLevel < 2) return;
+            
             const spawnPoints = [];
             
             // Encontra pontos válidos de spawn
@@ -823,8 +912,31 @@
                 }
             });
 
+            // Verifica se chegou na saída do nível
+            const level = levels[game.currentLevel];
+            if (level.exit) {
+                const exitDx = player.x - level.exit.x;
+                const exitDy = player.y - level.exit.y;
+                
+                if (Math.abs(exitDx) < level.exit.width/2 && 
+                    Math.abs(exitDy) < level.exit.height/2 &&
+                    enemies.length === 0) {  // Só pode sair se matou todos
+                    
+                    // Próximo nível!
+                    game.currentLevel++;
+                    if (game.currentLevel < levels.length) {
+                        loadLevel(game.currentLevel);
+                        createParticles(player.x, player.y, colors.neonBlue, 30, 10);
+                    } else {
+                        // Vitória! (por enquanto volta pro início)
+                        game.currentLevel = 0;
+                        loadLevel(0);
+                    }
+                }
+            }
+            
             // Spawn de inimigos (aumenta com o tempo)
-            const spawnRate = Math.min(0.02 + (game.time / 10000), 0.05);
+            const spawnRate = game.currentLevel > 1 ? Math.min(0.02 + (game.time / 10000), 0.05) : 0;
             if (Math.random() < spawnRate) {
                 spawnEnemy();
             }
@@ -848,7 +960,7 @@
             
             // Anima zoom da morte
             if (game.over && game.deathZoom < game.deathZoomTarget) {
-                game.deathZoom += 0.02;
+                game.deathZoom += 0.03;  // Zoom mais lento e dramático
             }
 
             // Atualiza UI
@@ -1012,16 +1124,7 @@
                     ctx.fillRect(-2, -2, 8, 4);
                 }
                 
-                // Linha de mira (sempre aparece)
-                ctx.rotate(displayAngle);
-                ctx.strokeStyle = colors.neonBlue;
-                ctx.globalAlpha = 0.5;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(player.size/2, 0);
-                ctx.lineTo(player.size * 2, 0);
-                ctx.stroke();
-                ctx.globalAlpha = 1;
+                // NÃO desenha linha de mira no player quando tem sprite
             }
             
             ctx.restore();
@@ -1037,6 +1140,49 @@
                 ctx.shadowBlur = 0;
             }
 
+            // Desenha saída do nível
+            const level = levels[game.currentLevel];
+            if (level.exit && enemies.length === 0) {  // Só mostra se matou todos
+                ctx.save();
+                ctx.fillStyle = colors.neonBlue;
+                ctx.strokeStyle = colors.neonBlue;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = colors.neonBlue;
+                ctx.lineWidth = 3;
+                
+                // Desenha portal de saída
+                ctx.strokeRect(
+                    level.exit.x - level.exit.width/2,
+                    level.exit.y - level.exit.height/2,
+                    level.exit.width,
+                    level.exit.height
+                );
+                
+                // Efeito pulsante
+                ctx.globalAlpha = Math.sin(game.time * 0.05) * 0.3 + 0.3;
+                ctx.fillRect(
+                    level.exit.x - level.exit.width/2,
+                    level.exit.y - level.exit.height/2,
+                    level.exit.width,
+                    level.exit.height
+                );
+                
+                ctx.restore();
+            }
+            
+            // UI do nível
+            ctx.fillStyle = colors.neonPurple;
+            ctx.font = 'bold 16px Orbitron';
+            ctx.textAlign = 'right';
+            ctx.fillText(`NÍVEL ${game.currentLevel + 1}: ${level.name}`, canvas.width - 20, 40);
+            
+            // Mensagem se precisa matar inimigos
+            if (level.exit && enemies.length > 0) {
+                ctx.fillStyle = colors.enemy;
+                ctx.textAlign = 'center';
+                ctx.fillText(`ELIMINE ${enemies.length} INIMIGO${enemies.length > 1 ? 'S' : ''}`, canvas.width/2, 60);
+            }
+            
             // Efeito de scanlines
             ctx.globalAlpha = 0.05;
             for (let y = 0; y < canvas.height; y += 4) {
@@ -1064,7 +1210,8 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Inicia o jogo
+        // Inicializa o jogo
+        loadLevel(0);
         gameLoop();
     </script>
 </body>
