@@ -1,4 +1,17 @@
-<!DOCTYPE html>
+// Atualiza debug info
+            document.getElementById('debugLevel').textContent = game.currentLevel + 1;
+            document.getElementById('debugEnemies').textContent = enemies.length;        #debugInfo {
+            position: absolute;
+            bottom: 50px;
+            left: 20px;
+            color: #00ff00;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 1px solid #00ff00;
+            max-width: 300px;
+        }<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -134,6 +147,11 @@
         </div>
         <div id="audioControls">
             <button onclick="toggleMusic()">🎵 MÚSICA</button>
+        </div>
+        <div id="debugInfo">
+            <div>Sprites carregados: <span id="debugSprites">0</span>/48</div>
+            <div>Nível: <span id="debugLevel">1</span></div>
+            <div>Inimigos: <span id="debugEnemies">0</span></div>
         </div>
     </div>
     
@@ -313,6 +331,7 @@
                 img.onload = () => {
                     sprites.player[category][index] = img;
                     sprites.loadedCount++;
+                    document.getElementById('debugSprites').textContent = sprites.loadedCount;
                     
                     if (sprites.loadedCount === sprites.totalSprites) {
                         console.log('✅ Sprites reais carregados!');
@@ -321,6 +340,7 @@
                 img.onerror = () => {
                     console.log(`⚠️ Usando sprite procedural para ${src}`);
                     sprites.loadedCount++;
+                    document.getElementById('debugSprites').textContent = sprites.loadedCount;
                 };
             }
             
