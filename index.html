@@ -148,21 +148,29 @@
         // Sistema de áudio
         const gameMusic = document.getElementById('gameMusic');
         gameMusic.volume = 0.5;  // Volume em 50%
+        let musicStarted = false;
         
         function toggleMusic() {
             if (gameMusic.paused) {
-                gameMusic.play();
+                gameMusic.play().catch(e => console.log('Erro ao tocar música:', e));
             } else {
                 gameMusic.pause();
             }
         }
         
-        // Toca música automaticamente quando o jogo inicia
-        window.addEventListener('click', () => {
-            if (gameMusic.paused) {
-                gameMusic.play().catch(e => console.log('Autoplay bloqueado'));
+        // Tenta tocar música no primeiro clique
+        function startMusic() {
+            if (!musicStarted) {
+                musicStarted = true;
+                gameMusic.play().catch(e => {
+                    console.log('Música bloqueada pelo navegador. Clique no botão de música.');
+                });
             }
-        }, { once: true });
+        }
+        
+        // Adiciona listeners para iniciar música
+        window.addEventListener('click', startMusic, { once: true });
+        window.addEventListener('keydown', startMusic, { once: true });
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -635,8 +643,6 @@
             
             drawProcedural() {
                 // Desenho humanóide procedural NEON (fallback)
-                const ctx = this.ctx || window.ctx;
-                
                 // Glow effect MUITO FORTE
                 ctx.shadowBlur = 30;
                 ctx.shadowColor = colors.enemyGlow;
@@ -1122,7 +1128,7 @@
 
             // Verifica se chegou na saída do nível
             const level = levels[game.currentLevel];
-            if (level.exit) {
+            if (level && level.exit) {
                 const exitDx = player.x - level.exit.x;
                 const exitDy = player.y - level.exit.y;
                 
@@ -1372,7 +1378,7 @@
 
             // Desenha saída do nível
             const level = levels[game.currentLevel];
-            if (level.exit && enemies.length === 0) {  // Só mostra se matou todos
+            if (level && level.exit && enemies.length === 0) {  // Só mostra se matou todos
                 ctx.save();
                 ctx.fillStyle = colors.neonBlue;
                 ctx.strokeStyle = colors.neonBlue;
@@ -1401,24 +1407,26 @@
             }
             
             // UI do nível
-            ctx.fillStyle = colors.neonPurple;
-            ctx.font = 'bold 16px Orbitron';
-            ctx.textAlign = 'right';
-            ctx.fillText(`NÍVEL ${game.currentLevel + 1}: ${level.name}`, canvas.width - 20, 40);
-            
-            // UI de vida (só 3 corações)
-            ctx.save();
-            ctx.fillStyle = colors.neonPink;
-            ctx.font = 'bold 24px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText('❤️'.repeat(player.health), 20, 90);
-            ctx.restore();
-            
-            // Mensagem se precisa matar inimigos
-            if (level.exit && enemies.length > 0) {
-                ctx.fillStyle = colors.enemy;
-                ctx.textAlign = 'center';
-                ctx.fillText(`ELIMINE ${enemies.length} INIMIGO${enemies.length > 1 ? 'S' : ''}`, canvas.width/2, 60);
+            if (level) {
+                ctx.fillStyle = colors.neonPurple;
+                ctx.font = 'bold 16px Orbitron';
+                ctx.textAlign = 'right';
+                ctx.fillText(`NÍVEL ${game.currentLevel + 1}: ${level.name}`, canvas.width - 20, 40);
+                
+                // UI de vida (só 3 corações)
+                ctx.save();
+                ctx.fillStyle = colors.neonPink;
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('❤️'.repeat(player.health), 20, 90);
+                ctx.restore();
+                
+                // Mensagem se precisa matar inimigos
+                if (level.exit && enemies.length > 0) {
+                    ctx.fillStyle = colors.enemy;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`ELIMINE ${enemies.length} INIMIGO${enemies.length > 1 ? 'S' : ''}`, canvas.width/2, 60);
+                }
             }
             
             // Efeito de scanlines
