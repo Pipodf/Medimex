@@ -87,6 +87,29 @@
             font-size: 14px;
             text-shadow: 0 0 10px #00ffff;
         }
+        
+        #audioControls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #00ffff;
+            font-size: 14px;
+        }
+        
+        #audioControls button {
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            text-shadow: 0 0 5px #00ffff;
+            margin-left: 10px;
+        }
+        
+        #audioControls button:hover {
+            background: rgba(0, 255, 255, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -109,9 +132,38 @@
         <div id="instructions">
             WASD: MOVER | MOUSE: MIRAR | CLIQUE: ATIRAR | ESPAÇO: DASH/ATROPELAR
         </div>
+        <div id="audioControls">
+            <button onclick="toggleMusic()">🎵 MÚSICA</button>
+        </div>
     </div>
+    
+    <!-- ADICIONE SUA MÚSICA AQUI -->
+    <audio id="gameMusic" loop>
+        <source src="musica.mp3" type="audio/mpeg">
+        <source src="musica.ogg" type="audio/ogg">
+        <!-- Adicione outros formatos se necessário -->
+    </audio>
 
     <script>
+        // Sistema de áudio
+        const gameMusic = document.getElementById('gameMusic');
+        gameMusic.volume = 0.5;  // Volume em 50%
+        
+        function toggleMusic() {
+            if (gameMusic.paused) {
+                gameMusic.play();
+            } else {
+                gameMusic.pause();
+            }
+        }
+        
+        // Toca música automaticamente quando o jogo inicia
+        window.addEventListener('click', () => {
+            if (gameMusic.paused) {
+                gameMusic.play().catch(e => console.log('Autoplay bloqueado'));
+            }
+        }, { once: true });
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = 960;
@@ -949,7 +1001,7 @@
             // Animação de pedalar
             if (player.currentAction === 'ride' && player.isMoving) {
                 player.animTimer++;
-                if (player.animTimer > 8) {  // Velocidade da pedalada
+                if (player.animTimer > 6) {  // Velocidade da pedalada ajustada
                     player.animTimer = 0;
                     player.animFrame = (player.animFrame + 1) % 2;  // Alterna entre 0 e 1
                 }
@@ -1034,7 +1086,7 @@
                 spawnEnemy();
             }
 
-            // Game over com zoom dramático MELHORADO
+            // Game over com zoom dramático FORÇADO
             if (player.health <= 0 && !game.over) {
                 game.over = true;
                 player.currentAction = 'death';
@@ -1046,8 +1098,9 @@
                 createParticles(player.x, player.y, colors.enemy, 30, 15);
                 game.screenShake = 20;
                 
-                // Inicia zoom imediatamente
-                game.deathZoom = 1.2;
+                // Força início do zoom
+                game.deathZoom = 1.5;
+                console.log('MORTE! Iniciando zoom em:', game.cameraX, game.cameraY);
                 
                 // Delay para mostrar game over
                 setTimeout(() => {
