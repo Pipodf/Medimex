@@ -1,22 +1,9 @@
-// Atualiza debug info
-            document.getElementById('debugLevel').textContent = game.currentLevel + 1;
-            document.getElementById('debugEnemies').textContent = enemies.length;        #debugInfo {
-            position: absolute;
-            bottom: 50px;
-            left: 20px;
-            color: #00ff00;
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border: 1px solid #00ff00;
-            max-width: 300px;
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon Carnage - Prototype</title>
+    <title>Medimex - Mad Max BMX Rampage</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&display=swap');
         
@@ -55,21 +42,29 @@
             letter-spacing: 2px;
         }
         
-        .ui-bar {
-            margin: 10px 0;
-            width: 200px;
-            height: 20px;
-            border: 2px solid #ff0066;
-            background: rgba(0, 0, 0, 0.8);
-            position: relative;
-            overflow: hidden;
+        #bombTimer {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            color: #ff0066;
+            font-size: 48px;
+            display: none;
+            text-shadow: 0 0 30px #ff0066;
+            animation: pulse 0.5s infinite;
         }
         
-        .ui-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0066, #ff00ff);
-            transition: width 0.3s ease;
-            box-shadow: 0 0 10px currentColor;
+        #objective {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00ffff;
+            font-size: 18px;
+            text-align: center;
+            text-shadow: 0 0 15px #00ffff;
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border: 2px solid #00ffff;
         }
         
         #gameOver {
@@ -88,6 +83,11 @@
         @keyframes pulse {
             0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
         }
         
         #instructions {
@@ -123,27 +123,39 @@
         #audioControls button:hover {
             background: rgba(0, 255, 255, 0.4);
         }
+        
+        #debugInfo {
+            position: absolute;
+            bottom: 50px;
+            left: 20px;
+            color: #ffffff;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 1px solid #ffffff;
+            max-width: 300px;
+        }
     </style>
 </head>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="ui">
-            <div>VIDA</div>
-            <div class="ui-bar">
-                <div class="ui-bar-fill" id="healthBar" style="width: 100%"></div>
-            </div>
+            <div style="font-size: 24px;">❤️❤️❤️</div>
             <div>PONTOS: <span id="score">0</span></div>
             <div style="font-size: 14px; margin-top: 20px; color: #00ffff;">
                 COMBO: x<span id="combo">1</span>
             </div>
         </div>
+        <div id="objective">OBJETIVO: ENCONTRE O LOCAL DA BOMBA</div>
+        <div id="bombTimer">⏱️ <span id="timerValue">30</span></div>
         <div id="gameOver">
             MORREU VÉI<br>
             <span style="font-size: 24px">Pressione R para reiniciar</span>
         </div>
         <div id="instructions">
-            WASD: MOVER | MOUSE: MIRAR | CLIQUE: ATIRAR | ESPAÇO: DASH/ATROPELAR
+            WASD: MOVER | MOUSE: MIRAR | CLIQUE: ATIRAR | ESPAÇO: DASH | E: INTERAGIR
         </div>
         <div id="audioControls">
             <button onclick="toggleMusic()">🎵 MÚSICA</button>
@@ -155,17 +167,15 @@
         </div>
     </div>
     
-    <!-- ADICIONE SUA MÚSICA AQUI -->
     <audio id="gameMusic" loop>
-        <source src="musica.mp3" type="audio/mpeg">
         <source src="musica.ogg" type="audio/ogg">
-        <!-- Adicione outros formatos se necessário -->
+        <source src="musica.mp3" type="audio/mpeg">
     </audio>
 
     <script>
         // Sistema de áudio
         const gameMusic = document.getElementById('gameMusic');
-        gameMusic.volume = 0.5;  // Volume em 50%
+        gameMusic.volume = 0.5;
         let musicStarted = false;
         
         function toggleMusic() {
@@ -176,26 +186,36 @@
             }
         }
         
-        // Tenta tocar música no primeiro clique
+        // Inicia música automaticamente
         function startMusic() {
             if (!musicStarted) {
                 musicStarted = true;
                 gameMusic.play().catch(e => {
-                    console.log('Música bloqueada pelo navegador. Clique no botão de música.');
+                    console.log('Música bloqueada pelo navegador. Clique para iniciar.');
+                    // Tenta novamente no próximo clique
+                    window.addEventListener('click', () => {
+                        gameMusic.play().catch(() => {});
+                    }, { once: true });
                 });
             }
         }
         
-        // Adiciona listeners para iniciar música
+        // Tenta iniciar música imediatamente
+        window.addEventListener('DOMContentLoaded', startMusic);
         window.addEventListener('click', startMusic, { once: true });
         window.addEventListener('keydown', startMusic, { once: true });
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        
+        // Canvas visível (viewport)
         canvas.width = 960;
         canvas.height = 640;
+        
+        // Mundo do jogo (4x maior na largura)
+        const WORLD_WIDTH = 3840;
+        const WORLD_HEIGHT = 640;
 
-        // Configure melhor qualidade de renderização
         ctx.imageSmoothingEnabled = false;
 
         // Estado do jogo
@@ -208,12 +228,17 @@
             screenShake: 0,
             time: 0,
             bloodParticles: [],
-            deathRotation: 0,     // Rotação na morte
-            deathRotationSpeed: 0.05, // Velocidade de rotação
+            deathRotation: 0,
+            deathRotationSpeed: 0.05,
             cameraX: 0,
             cameraY: 0,
-            currentLevel: 0,  // Nível atual
-            levelComplete: false
+            currentLevel: 0,
+            levelComplete: false,
+            bombPlanted: false,
+            bombTimer: 30,
+            escapeMode: false,
+            bombX: 0,
+            bombY: 0
         };
 
         // Paleta de cores neon
@@ -223,55 +248,218 @@
             bullet: '#ffff00',
             blood: ['#ff0066', '#cc0052', '#990039', '#660026'],
             wall: '#1a0033',
-            floor: '#2a2a2a',  // Asfalto escuro
+            floor: '#2a2a2a',
             neonBlue: '#00ffff',
             neonPink: '#ff00ff',
             neonPurple: '#9945ff',
-            enemyGlow: '#ff00ff'  // Rosa neon vibrante
+            enemyGlow: '#ff00ff',
+            bombGlow: '#ff0000',
+            carColor: '#444',
+            carAccent: '#666',
+            visionCone: '#ffff0033' // Amarelo transparente para cone de visão
         };
 
         // Sistema de Sprites
         const sprites = {
             loaded: false,
             loadedCount: 0,
-            totalSprites: 48,  // 16 mad max + 16 janis + 16 janis2
+            totalSprites: 48,
             player: {
-                idle: [],      // Frames 0-3 (uma pose por direção)
-                ride: [],      // Frames 4-7 e 0-3 alternando (pedalar)
-                wheelie: [],   // Frames 8-11
-                death: []      // Frames 12-15
+                idle: [],
+                ride: [],
+                wheelie: [],
+                death: []
             },
             enemies: {
                 janis: {
                     idle: [],
                     ride: [],
-                    wheelie: [],  // Armado quando vê o player
+                    wheelie: [],
                     death: []
                 },
                 janis2: {
                     idle: [],
                     ride: [],
-                    wheelie: [],  // Armado quando vê o player
+                    wheelie: [],
                     death: []
                 }
+            },
+            objects: {
+                car: null,
+                post: null,
+                barrel: null,
+                car_destroyed: null,
+                explosion: []
             }
         };
 
-        // Carrega sprites do Mad Max
+        // Objetos de cenário
+        const sceneObjects = [];
+
+        // Classe para objetos de cenário
+        class SceneObject {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.rotation = Math.random() * Math.PI * 2;
+                
+                switch(type) {
+                    case 'car':
+                        this.width = 60;
+                        this.height = 40;
+                        this.destructible = true;
+                        this.health = 3;
+                        break;
+                    case 'post':
+                        this.width = 20;
+                        this.height = 20;
+                        this.destructible = false;
+                        break;
+                    case 'barrel':
+                        this.width = 25;
+                        this.height = 25;
+                        this.destructible = true;
+                        this.health = 1;
+                        this.explosive = true;
+                        break;
+                }
+            }
+            
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                
+                // Tenta usar sprite real primeiro
+                if (sprites.objects[this.type] && sprites.objects[this.type].complete) {
+                    const sprite = sprites.objects[this.type];
+                    ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
+                } else {
+                    // Desenho procedural (fallback)
+                    switch(this.type) {
+                        case 'car':
+                            ctx.fillStyle = colors.carColor;
+                            ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                            ctx.fillStyle = '#222';
+                            ctx.fillRect(-this.width/3, -this.height/3, this.width/3, this.height/1.5);
+                            ctx.fillRect(this.width/6, -this.height/3, this.width/3, this.height/1.5);
+                            ctx.fillStyle = '#ffff00';
+                            ctx.fillRect(this.width/2 - 5, -this.height/3, 5, 8);
+                            ctx.fillRect(this.width/2 - 5, this.height/3 - 8, 5, 8);
+                            break;
+                            
+                        case 'post':
+                            ctx.fillStyle = '#333';
+                            ctx.beginPath();
+                            ctx.arc(0, 0, this.width/2, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.shadowBlur = 20;
+                            ctx.shadowColor = '#ffff00';
+                            ctx.fillStyle = '#ffff00';
+                            ctx.beginPath();
+                            ctx.arc(0, -5, 5, 0, Math.PI * 2);
+                            ctx.fill();
+                            ctx.shadowBlur = 0;
+                            break;
+                            
+                        case 'barrel':
+                            ctx.fillStyle = '#ff4400';
+                            ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                            ctx.fillStyle = '#ffff00';
+                            ctx.font = 'bold 16px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            ctx.fillText('⚠', 0, 0);
+                            break;
+                    }
+                }
+            }
+        }
+            
+            takeDamage(damage) {
+                if (!this.destructible) return false;
+                
+                this.health -= damage;
+                if (this.health <= 0) {
+                    if (this.explosive) {
+                        createExplosion(this.x, this.y, 100);
+                        game.screenShake = 20;
+                    } else {
+                        createParticles(this.x, this.y, colors.carColor, 15, 6);
+                    }
+                    return true;
+                }
+                return false;
+            }
+            
+            checkCollision(x, y, size) {
+                const dx = Math.abs(x - this.x);
+                const dy = Math.abs(y - this.y);
+                return dx < (this.width + size) / 2 && dy < (this.height + size) / 2;
+            }
+        }
+
+        // Sistema de bomba
+        const bomb = {
+            planted: false,
+            x: 0,
+            y: 0,
+            timer: 30,
+            blinkSpeed: 1,
+            size: 30
+        };
+
+        // Função para criar explosão
+        function createExplosion(x, y, radius) {
+            enemies.forEach((enemy, index) => {
+                const dx = enemy.x - x;
+                const dy = enemy.y - y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < radius) {
+                    enemy.health = 0;
+                    corpses.push({
+                        x: enemy.x,
+                        y: enemy.y,
+                        angle: enemy.angle,
+                        size: enemy.size,
+                        color: enemy.color
+                    });
+                    enemies.splice(index, 1);
+                    createBloodSplatter(enemy.x, enemy.y, 20);
+                }
+            });
+            
+            const pdx = player.x - x;
+            const pdy = player.y - y;
+            const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+            if (pdist < radius && player.invulnerable <= 0) {
+                player.health--;
+                player.invulnerable = 60;
+                game.screenShake = 15;
+            }
+            
+            createParticles(x, y, '#ff8800', 30, 15);
+            createParticles(x, y, '#ffff00', 20, 10);
+            createParticles(x, y, '#ff0000', 25, 12);
+        }
+
+        // Carrega sprites
         function loadSprites() {
             console.log('🏍️ Preparando sprites...');
             
-            // Como estamos no Claude, vamos criar sprites procedurais do Mad Max
-            // Quando você testar localmente, os PNGs vão carregar
-            
-            // Cria sprites procedurais para cada ação
+            // Sprites procedurais como fallback
             const actions = ['idle', 'ride', 'wheelie', 'death'];
-            const colors = {
+            const characterColors = {
                 bike: '#333',
                 rider: '#ff0066',
-                wheel: '#222'
+                wheel: '#222',
+                janisBody: '#ff00ff',
+                janisHair: '#cc00cc'
             };
             
+            // Sprites do player
             actions.forEach(action => {
                 for (let dir = 0; dir < 4; dir++) {
                     const canvas = document.createElement('canvas');
@@ -283,17 +471,14 @@
                     ctx.translate(32, 32);
                     ctx.rotate(dir * Math.PI / 2);
                     
-                    // Desenha bike
-                    ctx.fillStyle = colors.bike;
                     if (action === 'wheelie') {
-                        ctx.rotate(-0.3); // Inclina pra wheelie
+                        ctx.rotate(-0.3);
                     }
                     
-                    // Corpo da bike
+                    ctx.fillStyle = characterColors.bike;
                     ctx.fillRect(-20, -5, 40, 10);
                     
-                    // Rodas
-                    ctx.fillStyle = colors.wheel;
+                    ctx.fillStyle = characterColors.wheel;
                     ctx.beginPath();
                     ctx.arc(-15, 0, 8, 0, Math.PI * 2);
                     ctx.fill();
@@ -301,15 +486,11 @@
                     ctx.arc(15, 0, 8, 0, Math.PI * 2);
                     ctx.fill();
                     
-                    // Rider
-                    ctx.fillStyle = colors.rider;
+                    ctx.fillStyle = characterColors.rider;
                     if (action === 'death') {
-                        // Caído
                         ctx.fillRect(-5, -15, 10, 20);
                     } else {
-                        // Em cima da bike
                         ctx.fillRect(-5, -10, 10, 15);
-                        // Cabeça
                         ctx.beginPath();
                         ctx.arc(0, -10, 5, 0, Math.PI * 2);
                         ctx.fill();
@@ -321,10 +502,93 @@
                 }
             });
             
+            // Sprites procedurais da Janis (personagem feminina cyberpunk)
+            ['janis', 'janis2'].forEach(enemyType => {
+                actions.forEach(action => {
+                    for (let dir = 0; dir < 4; dir++) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 64;
+                        canvas.height = 64;
+                        const ctx = canvas.getContext('2d');
+                        
+                        ctx.save();
+                        ctx.translate(32, 32);
+                        ctx.rotate(dir * Math.PI / 2);
+                        
+                        // Corpo da Janis
+                        ctx.fillStyle = characterColors.janisBody;
+                        
+                        if (action === 'death') {
+                            // Caída
+                            ctx.fillRect(-8, -15, 16, 25);
+                        } else {
+                            // Corpo
+                            ctx.fillRect(-6, -10, 12, 18);
+                            
+                            // Cabeça
+                            ctx.beginPath();
+                            ctx.arc(0, -12, 7, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Cabelo
+                            ctx.fillStyle = characterColors.janisHair;
+                            ctx.fillRect(-8, -18, 16, 8);
+                            ctx.fillRect(-10, -16, 3, 12);
+                            ctx.fillRect(7, -16, 3, 12);
+                            
+                            // Braços
+                            ctx.fillStyle = characterColors.janisBody;
+                            ctx.fillRect(-10, -8, 4, 10);
+                            ctx.fillRect(6, -8, 4, 10);
+                            
+                            // Arma quando armada
+                            if (action === 'wheelie') {
+                                ctx.fillStyle = '#ffff00';
+                                ctx.fillRect(8, -6, 12, 3);
+                            }
+                            
+                            // Pernas
+                            ctx.fillStyle = characterColors.janisBody;
+                            ctx.fillRect(-4, 8, 3, 8);
+                            ctx.fillRect(1, 8, 3, 8);
+                        }
+                        
+                        ctx.restore();
+                        
+                        sprites.enemies[enemyType][action][dir] = canvas;
+                    }
+                });
+            });
+            
             sprites.loaded = true;
             console.log('✅ Sprites procedurais criados!');
             
-            // Função auxiliar para carregar imagens reais (para quando sair do Claude)
+            // Tenta carregar sprites de objetos
+            function loadObjectSprite(filename, objName) {
+                const img = new Image();
+                img.src = './' + filename;
+                img.onload = () => {
+                    sprites.objects[objName] = img;
+                    console.log(`✅ Sprite ${filename} carregado!`);
+                };
+                img.onerror = () => {
+                    console.log(`⚠️ Sprite ${filename} não encontrado, usando procedural`);
+                };
+            }
+            
+            // Carrega sprites de objetos (se existirem)
+            loadObjectSprite('car.png', 'car');
+            loadObjectSprite('post.png', 'post');
+            loadObjectSprite('barrel.png', 'barrel');
+            loadObjectSprite('car_destroyed.png', 'car_destroyed');
+            
+            // Tenta carregar animação de explosão
+            for (let i = 1; i <= 8; i++) {
+                const num = i.toString().padStart(3, '0');
+                loadObjectSprite(`explosion_${num}.png`, `explosion_${i-1}`);
+            }
+            
+            // Tenta carregar imagens reais
             function loadImage(src, category, index) {
                 const img = new Image();
                 img.src = src;
@@ -332,76 +596,34 @@
                     sprites.player[category][index] = img;
                     sprites.loadedCount++;
                     document.getElementById('debugSprites').textContent = sprites.loadedCount;
-                    
-                    if (sprites.loadedCount === sprites.totalSprites) {
-                        console.log('✅ Sprites reais carregados!');
-                    }
                 };
                 img.onerror = () => {
-                    console.log(`⚠️ Usando sprite procedural para ${src}`);
                     sprites.loadedCount++;
                     document.getElementById('debugSprites').textContent = sprites.loadedCount;
                 };
             }
             
-            // Tenta carregar os PNGs reais (vai falhar no Claude, mas funciona local)
             const spritePath = './';
             
-            // IDLE (Frames 0-3)
-            loadImage(spritePath + 'madmax000.png', 'idle', 0);
-            loadImage(spritePath + 'madmax001.png', 'idle', 1);
-            loadImage(spritePath + 'madmax002.png', 'idle', 2);
-            loadImage(spritePath + 'madmax003.png', 'idle', 3);
+            // Carrega sprites do Mad Max
+            for (let i = 0; i < 4; i++) {
+                loadImage(spritePath + `madmax00${i}.png`, 'idle', i);
+                loadImage(spritePath + `madmax00${i + 8}.png`, 'wheelie', i);
+                loadImage(spritePath + `madmax0${i + 12}.png`, 'death', i);
+            }
             
-            // RIDE (Frames 4-7 são pé baixo, 0-3 são pé alto)
-            // Organizamos como: [pé alto, pé baixo] para cada direção
-            loadImage(spritePath + 'madmax000.png', 'ride', 0);  // Direita pé alto
-            loadImage(spritePath + 'madmax004.png', 'ride', 1);  // Direita pé baixo
-            loadImage(spritePath + 'madmax001.png', 'ride', 2);  // Baixo pé alto
-            loadImage(spritePath + 'madmax005.png', 'ride', 3);  // Baixo pé baixo
-            loadImage(spritePath + 'madmax002.png', 'ride', 4);  // Esquerda pé alto
-            loadImage(spritePath + 'madmax006.png', 'ride', 5);  // Esquerda pé baixo
-            loadImage(spritePath + 'madmax003.png', 'ride', 6);  // Cima pé alto
-            loadImage(spritePath + 'madmax007.png', 'ride', 7);  // Cima pé baixo
-            
-            // WHEELIE (Frames 8-11)
-            loadImage(spritePath + 'madmax008.png', 'wheelie', 0);
-            loadImage(spritePath + 'madmax009.png', 'wheelie', 1);
-            loadImage(spritePath + 'madmax010.png', 'wheelie', 2);
-            loadImage(spritePath + 'madmax011.png', 'wheelie', 3);
-            
-            // DEATH (Frames 12-15)
-            loadImage(spritePath + 'madmax012.png', 'death', 0);
-            loadImage(spritePath + 'madmax013.png', 'death', 1);
-            loadImage(spritePath + 'madmax014.png', 'death', 2);
-            loadImage(spritePath + 'madmax015.png', 'death', 3);
-            
-            // Sprite do inimigo (temporário)
-            const enemyCanvas = document.createElement('canvas');
-            enemyCanvas.width = 64;
-            enemyCanvas.height = 64;
-            const eCtx = enemyCanvas.getContext('2d');
-            
-            eCtx.fillStyle = colors.enemy;
-            eCtx.beginPath();
-            eCtx.arc(32, 32, 20, 0, Math.PI * 2);
-            eCtx.fill();
-            
-            eCtx.fillStyle = colors.enemy;
-            eCtx.beginPath();
-            eCtx.arc(32, 32, 20, 0, Math.PI * 2);
-            eCtx.fill();
-            
-            sprites.enemy = enemyCanvas;
+            for (let i = 0; i < 4; i++) {
+                loadImage(spritePath + `madmax00${i}.png`, 'ride', i * 2);
+                loadImage(spritePath + `madmax00${i + 4}.png`, 'ride', i * 2 + 1);
+            }
         }
 
-        // Carrega sprites ao iniciar
         loadSprites();
 
         // Jogador
         const player = {
-            x: canvas.width / 2,
-            y: canvas.height / 2,
+            x: 200,
+            y: 320,
             size: 24,
             speed: 5,
             dashSpeed: 15,
@@ -416,17 +638,18 @@
             trail: [],
             sprite: null,
             frameTime: 0,
-            currentAction: 'idle',  // idle, ride, wheelie, death
-            direction: 0,          // 0=direita, 1=baixo, 2=esquerda, 3=cima
+            currentAction: 'idle',
+            direction: 0,
             isMoving: false,
             onBike: true,
-            animFrame: 0,          // Frame atual da animação
-            animTimer: 0           // Timer para trocar frames
+            animFrame: 0,
+            animTimer: 0,
+            hasBomb: false
         };
 
         // Controles
         const keys = {};
-        const mouse = { x: 0, y: 0, pressed: false };
+        const mouse = { x: 0, y: 0, worldX: 0, worldY: 0, pressed: false };
 
         // Arrays do jogo
         const enemies = [];
@@ -434,33 +657,112 @@
         const particles = [];
         const corpses = [];
 
-        // Sistema de níveis
+        // Sistema de níveis aprimorado
         const levels = [
             {
-                // Nível 1: Entrada
-                name: "Entrada do Território",
-                playerStart: { x: 100, y: 320 },
-                exit: { x: 860, y: 320, width: 60, height: 100 },
-                enemies: [],  // Sem inimigos no primeiro nível
-                message: "Entre no território inimigo..."
+                name: "Tutorial - Aprenda os Controles",
+                playerStart: { x: 200, y: 320 },
+                exit: { x: 3700, y: 320, width: 60, height: 100 },
+                enemies: [],
+                sceneObjects: [
+                    { x: 600, y: 200, type: 'barrel' },
+                    { x: 600, y: 400, type: 'barrel' },
+                    { x: 1200, y: 320, type: 'car' },
+                    { x: 1800, y: 200, type: 'post' },
+                    { x: 1800, y: 400, type: 'post' },
+                    { x: 2400, y: 320, type: 'car' },
+                    { x: 3000, y: 200, type: 'barrel' },
+                    { x: 3000, y: 400, type: 'barrel' }
+                ],
+                message: "Atire nos barris! Use ESPAÇO para dash!"
             },
             {
-                // Nível 2: Primeiro Confronto
-                name: "Zona de Patrulha",
-                playerStart: { x: 100, y: 320 },
-                exit: { x: 860, y: 320, width: 60, height: 100 },
+                name: "Entrada do Território",
+                playerStart: { x: 200, y: 320 },
+                exit: { x: 3700, y: 320, width: 60, height: 100 },
                 enemies: [
-                    { x: 400, y: 200, type: 'janis' },
-                    { x: 600, y: 400, type: 'janis2' }
+                    { x: 1200, y: 320, type: 'janis', patrol: 'circle' },
+                    { x: 2000, y: 200, type: 'janis', patrol: 'lookAround' },
+                    { x: 2800, y: 400, type: 'janis', patrol: 'circle' }
                 ],
-                message: "Cuidado! Guardas à frente!"
+                sceneObjects: [
+                    { x: 400, y: 200, type: 'post' },
+                    { x: 400, y: 400, type: 'post' },
+                    { x: 800, y: 320, type: 'car' },
+                    { x: 1600, y: 150, type: 'car' },
+                    { x: 1600, y: 450, type: 'car' },
+                    { x: 2400, y: 320, type: 'barrel' },
+                    { x: 3200, y: 200, type: 'post' },
+                    { x: 3200, y: 400, type: 'post' }
+                ],
+                message: "Evite ser visto pelos guardas!"
+            },
+            {
+                name: "Zona de Patrulha",
+                playerStart: { x: 200, y: 320 },
+                exit: { x: 3700, y: 100, width: 60, height: 100 },
+                bombLocation: { x: 1920, y: 320 },
+                enemies: [
+                    { x: 800, y: 200, type: 'janis', patrol: 'circle' },
+                    { x: 1200, y: 400, type: 'janis2', patrol: 'lookAround' },
+                    { x: 1600, y: 320, type: 'janis', patrol: 'horizontal' },
+                    { x: 2400, y: 200, type: 'janis', patrol: 'circle' },
+                    { x: 2800, y: 400, type: 'janis2', patrol: 'vertical' },
+                    { x: 3200, y: 320, type: 'janis', patrol: 'lookAround' }
+                ],
+                sceneObjects: [
+                    { x: 500, y: 150, type: 'car' },
+                    { x: 500, y: 450, type: 'car' },
+                    { x: 1000, y: 320, type: 'barrel' },
+                    { x: 1400, y: 100, type: 'post' },
+                    { x: 1400, y: 500, type: 'post' },
+                    { x: 2000, y: 150, type: 'car' },
+                    { x: 2000, y: 450, type: 'car' },
+                    { x: 2600, y: 320, type: 'barrel' },
+                    { x: 3400, y: 200, type: 'post' },
+                    { x: 3400, y: 400, type: 'post' }
+                ],
+                message: "Elimine os guardas e plante a bomba!"
+            },
+            {
+                name: "Base Inimiga",
+                playerStart: { x: 200, y: 100 },
+                exit: { x: 200, y: 540, width: 100, height: 60 },
+                bombLocation: { x: 3200, y: 500 },
+                enemies: [
+                    { x: 600, y: 320, type: 'janis2', patrol: 'circle' },
+                    { x: 1000, y: 200, type: 'janis', patrol: 'lookAround' },
+                    { x: 1000, y: 400, type: 'janis', patrol: 'lookAround' },
+                    { x: 1600, y: 320, type: 'janis2', patrol: 'horizontal' },
+                    { x: 2000, y: 100, type: 'janis', patrol: 'vertical' },
+                    { x: 2000, y: 500, type: 'janis', patrol: 'vertical' },
+                    { x: 2600, y: 300, type: 'janis2', patrol: 'circle' },
+                    { x: 3000, y: 200, type: 'janis', patrol: 'lookAround' },
+                    { x: 3400, y: 400, type: 'janis', patrol: 'horizontal' }
+                ],
+                sceneObjects: [
+                    { x: 400, y: 320, type: 'car' },
+                    { x: 800, y: 150, type: 'car' },
+                    { x: 800, y: 450, type: 'car' },
+                    { x: 1200, y: 250, type: 'barrel' },
+                    { x: 1200, y: 350, type: 'barrel' },
+                    { x: 1800, y: 150, type: 'post' },
+                    { x: 1800, y: 450, type: 'post' },
+                    { x: 2200, y: 320, type: 'car' },
+                    { x: 2400, y: 200, type: 'barrel' },
+                    { x: 2400, y: 400, type: 'barrel' },
+                    { x: 2800, y: 150, type: 'post' },
+                    { x: 2800, y: 450, type: 'post' },
+                    { x: 3600, y: 320, type: 'car' }
+                ],
+                message: "A base principal! Plante a bomba no depósito!"
             }
         ];
 
         // Mapa melhorado
         const tileSize = 32;
-        const mapWidth = Math.floor(canvas.width / tileSize);
-        const mapHeight = Math.floor(canvas.height / tileSize);
+        const mapWidth = Math.floor(WORLD_WIDTH / tileSize);
+        const mapHeight = Math.floor(WORLD_HEIGHT / tileSize);
         let map = [];
 
         // Função para gerar mapa do nível
@@ -479,57 +781,171 @@
                 }
             }
             
-            // Adiciona obstáculos baseado no nível
-            if (levelIndex === 0) {
-                // Nível 1: Corredor simples
-                for (let y = 5; y < mapHeight - 5; y++) {
-                    if (y < 8 || y > 11) {
-                        map[y][Math.floor(mapWidth / 2)] = 1;
+            // Pega o nível atual para saber posições seguras
+            const level = levels[levelIndex];
+            const safeZones = [];
+            
+            // Adiciona zona segura ao redor do player
+            if (level) {
+                safeZones.push({
+                    x: Math.floor(level.playerStart.x / tileSize),
+                    y: Math.floor(level.playerStart.y / tileSize),
+                    radius: 3
+                });
+                
+                // Adiciona zonas seguras ao redor dos inimigos
+                if (level.enemies) {
+                    level.enemies.forEach(enemy => {
+                        safeZones.push({
+                            x: Math.floor(enemy.x / tileSize),
+                            y: Math.floor(enemy.y / tileSize),
+                            radius: 2
+                        });
+                    });
+                }
+                
+                // Adiciona zonas seguras ao redor dos objetos
+                if (level.sceneObjects) {
+                    level.sceneObjects.forEach(obj => {
+                        safeZones.push({
+                            x: Math.floor(obj.x / tileSize),
+                            y: Math.floor(obj.y / tileSize),
+                            radius: 2
+                        });
+                    });
+                }
+                
+                // Zona segura para saída
+                if (level.exit) {
+                    safeZones.push({
+                        x: Math.floor(level.exit.x / tileSize),
+                        y: Math.floor(level.exit.y / tileSize),
+                        radius: 3
+                    });
+                }
+                
+                // Zona segura para bomba
+                if (level.bombLocation) {
+                    safeZones.push({
+                        x: Math.floor(level.bombLocation.x / tileSize),
+                        y: Math.floor(level.bombLocation.y / tileSize),
+                        radius: 3
+                    });
+                }
+            }
+            
+            // Função para verificar se uma posição está em zona segura
+            function isInSafeZone(x, y) {
+                for (let zone of safeZones) {
+                    const dx = x - zone.x;
+                    const dy = y - zone.y;
+                    if (Math.sqrt(dx * dx + dy * dy) <= zone.radius) {
+                        return true;
                     }
                 }
-            } else {
-                // Outros níveis: obstáculos aleatórios
-                for (let i = 0; i < 10 + levelIndex * 3; i++) {
-                    const x = Math.floor(Math.random() * (mapWidth - 4)) + 2;
-                    const y = Math.floor(Math.random() * (mapHeight - 4)) + 2;
-                    const w = Math.floor(Math.random() * 3) + 1;
-                    const h = Math.floor(Math.random() * 3) + 1;
-                    
-                    for (let dy = 0; dy < h; dy++) {
-                        for (let dx = 0; dx < w; dx++) {
-                            if (x + dx < mapWidth - 1 && y + dy < mapHeight - 1) {
-                                map[y + dy][x + dx] = 1;
-                            }
+                return false;
+            }
+            
+            // Adiciona paredes baseado no nível
+            if (levelIndex === 0) {
+                // Tutorial: obstáculos simples em posições fixas
+                for (let i = 0; i < 8; i++) {
+                    const x = 10 + i * 15;
+                    for (let y = 5; y < mapHeight - 5; y++) {
+                        if ((y < 8 || y > 11) && !isInSafeZone(x, y)) {
+                            map[y][x] = 1;
                         }
                     }
                 }
+            } else if (levelIndex >= 1) {
+                // Níveis com paredes estratégicas (não aleatórias)
+                const wallPatterns = [
+                    // Padrão 1: Corredores horizontais
+                    () => {
+                        for (let x = 10; x < mapWidth - 10; x += 30) {
+                            for (let y = 5; y < mapHeight - 5; y++) {
+                                if ((y < 7 || y > 12) && !isInSafeZone(x, y)) {
+                                    map[y][x] = 1;
+                                }
+                            }
+                        }
+                    },
+                    // Padrão 2: Salas
+                    () => {
+                        // Sala 1
+                        for (let x = 20; x < 40; x++) {
+                            if (!isInSafeZone(x, 5)) map[5][x] = 1;
+                            if (!isInSafeZone(x, 14)) map[14][x] = 1;
+                        }
+                        for (let y = 5; y < 15; y++) {
+                            if (!isInSafeZone(20, y)) map[y][20] = 1;
+                            if (!isInSafeZone(40, y)) map[y][40] = 1;
+                        }
+                        
+                        // Sala 2
+                        for (let x = 60; x < 80; x++) {
+                            if (!isInSafeZone(x, 8)) map[8][x] = 1;
+                            if (!isInSafeZone(x, 11)) map[11][x] = 1;
+                        }
+                    },
+                    // Padrão 3: Labirinto simples
+                    () => {
+                        // Paredes verticais
+                        for (let x = 15; x < mapWidth - 15; x += 20) {
+                            for (let y = 3; y < mapHeight - 3; y++) {
+                                if (y < 6 || y > 13) {
+                                    if (!isInSafeZone(x, y)) map[y][x] = 1;
+                                }
+                            }
+                        }
+                    }
+                ];
+                
+                // Usa um padrão baseado no nível
+                const patternIndex = (levelIndex - 1) % wallPatterns.length;
+                wallPatterns[patternIndex]();
             }
         }
 
-        // Inicializa o primeiro nível
         generateLevelMap(0);
 
-        // Classe de inimigo melhorada
+        // Classe de inimigo melhorada com patrulha
         class Enemy {
-            constructor(x, y, type = 'janis') {
+            constructor(x, y, type = 'janis', patrol = 'circle') {
                 this.x = x;
                 this.y = y;
+                this.startX = x;
+                this.startY = y;
                 this.size = 20;
                 this.speed = 2 + Math.random();
-                this.health = 2;  // 2 hits para matar
+                this.health = 2;
                 this.maxHealth = 2;
-                this.color = '#ff00ff';  // FORÇA cor neon
+                this.color = '#ff00ff';
                 this.angle = 0;
-                this.type = type;  // 'janis' ou 'janis2'
+                this.type = type;
                 this.behavior = Math.random() > 0.7 ? 'rusher' : 'normal';
                 this.glowIntensity = 0;
                 this.hitFlash = 0;
                 this.active = false;
-                this.detectionRange = 150;
+                this.detectionRange = 200;
+                this.visionAngle = Math.PI / 3; // 60 graus de cone de visão
                 this.currentAction = 'idle';
                 this.direction = 0;
                 this.animFrame = 0;
                 this.animTimer = 0;
+                this.shootCooldown = 0;
+                this.patrol = patrol;
+                this.patrolTimer = 0;
+                this.patrolDirection = 1;
+                this.lookDirection = 0;
+                
+                if (type === 'janis2') {
+                    this.speed *= 1.2;
+                    this.detectionRange = 250;
+                    this.health = 3;
+                    this.maxHealth = 3;
+                    this.visionAngle = Math.PI / 2.5; // Visão mais ampla
+                }
             }
 
             update() {
@@ -537,43 +953,44 @@
                 const dy = player.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                // Verifica linha de visão antes de ativar
-                const hasLineOfSight = this.checkLineOfSight(player.x, player.y);
+                // Patrulha quando não ativo
+                if (!this.active && !game.escapeMode) {
+                    this.doPatrol();
+                }
                 
-                // Ativa inimigo quando player chega perto E tem linha de visão
-                if (!this.active && distance < this.detectionRange && hasLineOfSight) {
+                const hasLineOfSight = this.checkLineOfSight(player.x, player.y);
+                const inVisionCone = this.isInVisionCone(player.x, player.y);
+                
+                if (!this.active && distance < this.detectionRange && hasLineOfSight && inVisionCone) {
                     this.active = true;
-                    this.currentAction = 'wheelie'; // Fica armado!
+                    this.currentAction = 'wheelie';
                     createParticles(this.x, this.y, colors.neonPink, 10, 5);
                 }
                 
-                // Atualiza direção
-                if (dx > 0) this.direction = 0;      // Direita
-                else if (dy > 0) this.direction = 1; // Baixo
-                else if (dx < 0) this.direction = 2; // Esquerda
-                else if (dy < 0) this.direction = 3; // Cima
+                if (game.escapeMode) {
+                    this.speed = 4;
+                    this.detectionRange = 300;
+                    this.active = true;
+                }
                 
-                // Só se move se estiver ativo
                 if (this.active && distance > 0) {
                     const moveSpeed = this.behavior === 'rusher' ? this.speed * 1.5 : this.speed;
                     
-                    // Movimento com colisão
                     const nextX = this.x + (dx / distance) * moveSpeed;
                     const nextY = this.y + (dy / distance) * moveSpeed;
                     
-                    // Verifica colisão com paredes
-                    let moved = false;
-                    if (!checkWallCollision(nextX, this.y, this.size)) {
-                        this.x = nextX;
-                        moved = true;
-                    }
-                    if (!checkWallCollision(this.x, nextY, this.size)) {
-                        this.y = nextY;
-                        moved = true;
-                    }
+                    let canMoveX = !checkWallCollision(nextX, this.y, this.size);
+                    let canMoveY = !checkWallCollision(this.x, nextY, this.size);
                     
-                    // Se está se movendo, anima
-                    if (moved && this.active) {
+                    sceneObjects.forEach(obj => {
+                        if (obj.checkCollision(nextX, this.y, this.size)) canMoveX = false;
+                        if (obj.checkCollision(this.x, nextY, this.size)) canMoveY = false;
+                    });
+                    
+                    if (canMoveX) this.x = nextX;
+                    if (canMoveY) this.y = nextY;
+                    
+                    if (canMoveX || canMoveY) {
                         this.currentAction = 'ride';
                         this.animTimer++;
                         if (this.animTimer > 6) {
@@ -581,20 +998,30 @@
                             this.animFrame = (this.animFrame + 1) % 2;
                         }
                     } else if (this.active) {
-                        this.currentAction = 'wheelie'; // Volta a ficar armado se parado
+                        this.currentAction = 'wheelie';
                     }
                     
                     this.angle = Math.atan2(dy, dx);
+                    this.updateDirection();
+                    
+                    if (this.currentAction === 'wheelie' && distance < 200 && this.shootCooldown <= 0) {
+                        this.shoot();
+                        this.shootCooldown = 60;
+                    }
+                } else if (!this.active) {
+                    // Atualiza direção baseada no ângulo de patrulha
+                    this.updateDirection();
                 }
+                
+                if (this.shootCooldown > 0) this.shootCooldown--;
 
                 // Colisão com o jogador
                 if (distance < this.size + player.size && player.invulnerable <= 0) {
-                    player.health -= 1;  // Perde 1 vida por hit
+                    player.health -= 1;
                     player.invulnerable = 60;
                     game.screenShake = 10;
                     createBloodSplatter(player.x, player.y, 20);
                     
-                    // Knockback
                     const knockbackAngle = Math.atan2(player.y - this.y, player.x - this.x);
                     player.x += Math.cos(knockbackAngle) * 20;
                     player.y += Math.sin(knockbackAngle) * 20;
@@ -604,7 +1031,90 @@
                 if (this.hitFlash > 0) this.hitFlash--;
             }
             
-            // Verifica linha de visão
+            doPatrol() {
+                this.patrolTimer++;
+                
+                switch(this.patrol) {
+                    case 'circle':
+                        // Anda em círculo
+                        const radius = 50;
+                        const speed = 0.02;
+                        this.x = this.startX + Math.cos(this.patrolTimer * speed) * radius;
+                        this.y = this.startY + Math.sin(this.patrolTimer * speed) * radius;
+                        this.angle = Math.atan2(
+                            Math.sin(this.patrolTimer * speed + 0.1) * radius - Math.sin(this.patrolTimer * speed) * radius,
+                            Math.cos(this.patrolTimer * speed + 0.1) * radius - Math.cos(this.patrolTimer * speed) * radius
+                        );
+                        this.currentAction = 'ride';
+                        break;
+                        
+                    case 'lookAround':
+                        // Fica parado olhando para os lados
+                        this.currentAction = 'idle';
+                        if (this.patrolTimer % 120 === 0) {
+                            this.lookDirection = (this.lookDirection + 1) % 4;
+                            this.angle = this.lookDirection * Math.PI / 2;
+                        }
+                        break;
+                        
+                    case 'horizontal':
+                        // Anda horizontalmente
+                        this.currentAction = 'ride';
+                        this.x += this.patrolDirection * 2;
+                        if (Math.abs(this.x - this.startX) > 100) {
+                            this.patrolDirection *= -1;
+                        }
+                        this.angle = this.patrolDirection > 0 ? 0 : Math.PI;
+                        break;
+                        
+                    case 'vertical':
+                        // Anda verticalmente
+                        this.currentAction = 'ride';
+                        this.y += this.patrolDirection * 2;
+                        if (Math.abs(this.y - this.startY) > 100) {
+                            this.patrolDirection *= -1;
+                        }
+                        this.angle = this.patrolDirection > 0 ? Math.PI/2 : -Math.PI/2;
+                        break;
+                }
+                
+                // Animação de andar durante patrulha
+                if (this.currentAction === 'ride') {
+                    this.animTimer++;
+                    if (this.animTimer > 8) {
+                        this.animTimer = 0;
+                        this.animFrame = (this.animFrame + 1) % 2;
+                    }
+                }
+            }
+            
+            updateDirection() {
+                const angle = this.angle;
+                if (angle > -Math.PI/4 && angle <= Math.PI/4) this.direction = 0; // Direita
+                else if (angle > Math.PI/4 && angle <= 3*Math.PI/4) this.direction = 1; // Baixo
+                else if (angle > 3*Math.PI/4 || angle <= -3*Math.PI/4) this.direction = 2; // Esquerda
+                else this.direction = 3; // Cima
+            }
+            
+            isInVisionCone(targetX, targetY) {
+                const dx = targetX - this.x;
+                const dy = targetY - this.y;
+                const angleToTarget = Math.atan2(dy, dx);
+                
+                let angleDiff = angleToTarget - this.angle;
+                // Normaliza o ângulo para [-PI, PI]
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                return Math.abs(angleDiff) < this.visionAngle / 2;
+            }
+            
+            shoot() {
+                const bulletAngle = Math.atan2(player.y - this.y, player.x - this.x);
+                projectiles.push(new EnemyProjectile(this.x, this.y, bulletAngle));
+                createParticles(this.x, this.y, '#ff00ff', 5, 3);
+            }
+            
             checkLineOfSight(targetX, targetY) {
                 const steps = 20;
                 const stepX = (targetX - this.x) / steps;
@@ -618,33 +1128,52 @@
                     const tileY = Math.floor(checkY / tileSize);
                     
                     if (map[tileY] && map[tileY][tileX] === 1) {
-                        return false; // Bloqueado por parede
+                        return false;
+                    }
+                    
+                    for (let obj of sceneObjects) {
+                        if (obj.checkCollision(checkX, checkY, 5)) {
+                            return false;
+                        }
                     }
                 }
                 
-                return true; // Linha de visão limpa
+                return true;
             }
 
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
+                
+                // Desenha cone de visão ANTES do personagem
+                if (!this.active) {
+                    ctx.save();
+                    ctx.rotate(this.angle);
+                    ctx.fillStyle = colors.visionCone;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.arc(0, 0, this.detectionRange, -this.visionAngle/2, this.visionAngle/2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+                
+                // Desenha o personagem
                 ctx.rotate(this.angle);
                 
-                // Tenta usar sprites do Janis
+                // Tenta usar sprites da Janis
                 if (sprites.loaded && sprites.enemies[this.type] && sprites.enemies[this.type][this.currentAction]) {
                     const spriteArray = sprites.enemies[this.type][this.currentAction];
                     let sprite;
                     
-                    // Se está andando, usa animação
                     if (this.currentAction === 'ride') {
-                        const frameIndex = this.direction * 2 + this.animFrame;
-                        sprite = spriteArray[frameIndex] || spriteArray[this.direction];
+                        const frameIndex = this.animFrame; // Usa só o frame de animação
+                        sprite = spriteArray[frameIndex] || spriteArray[0];
                     } else {
-                        sprite = spriteArray[this.direction];
+                        sprite = spriteArray[this.direction] || spriteArray[0];
                     }
                     
                     if (sprite && sprite.complete) {
-                        // Flash quando atingido
                         if (this.hitFlash > 0) {
                             ctx.filter = 'brightness(2)';
                         }
@@ -652,78 +1181,173 @@
                         ctx.drawImage(sprite, -32, -32, 64, 64);
                         ctx.filter = 'none';
                     } else {
-                        this.drawProcedural(); // Fallback
+                        // Fallback para desenho procedural
+                        this.drawProcedural();
                     }
                 } else {
-                    this.drawProcedural(); // Fallback
-                }
-                
-                ctx.restore();
-            }
+                    // Desenho procedural da Janis
+                    this.drawProcedural();
+
             
             drawProcedural() {
-                // Desenho humanóide procedural NEON (fallback)
-                // Glow effect MUITO FORTE
+                // Desenho procedural da Janis como fallback
                 ctx.shadowBlur = 30;
                 ctx.shadowColor = colors.enemyGlow;
                 
-                // Flash quando atingido
                 if (this.hitFlash > 0) {
                     ctx.fillStyle = '#ffffff';
                 } else {
                     ctx.fillStyle = colors.enemyGlow;
                 }
                 
-                // Corpo (tronco) - NEON
-                ctx.fillRect(-8, -12, 16, 20);
+                // Corpo feminino estilizado
+                ctx.fillRect(-6, -10, 12, 18);
                 
-                // Cabeça - NEON
+                // Cabeça
                 ctx.beginPath();
-                ctx.arc(0, -12, 8, 0, Math.PI * 2);
+                ctx.arc(0, -12, 7, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Braços - NEON
-                ctx.fillRect(-12, -8, 4, 12);
-                ctx.fillRect(8, -8, 4, 12);
+                // Cabelo
+                ctx.fillStyle = '#cc00cc';
+                ctx.fillRect(-8, -18, 16, 8);
+                ctx.fillRect(-10, -16, 3, 12);
+                ctx.fillRect(7, -16, 3, 12);
                 
-                // Se está armado, desenha arma
+                // Braços
+                ctx.fillStyle = colors.enemyGlow;
+                ctx.fillRect(-10, -8, 4, 10);
+                ctx.fillRect(6, -8, 4, 10);
+                
+                // Arma quando armada
                 if (this.currentAction === 'wheelie') {
                     ctx.fillStyle = '#ffff00';
-                    ctx.fillRect(10, -6, 15, 3);
+                    ctx.fillRect(8, -6, 12, 3);
                 }
                 
-                // Pernas - NEON
-                ctx.fillRect(-6, 8, 5, 10);
-                ctx.fillRect(1, 8, 5, 10);
+                // Pernas
+                ctx.fillRect(-4, 8, 3, 8);
+                ctx.fillRect(1, 8, 3, 8);
                 
-                // Olhos brilhantes (sempre visíveis)
+                // Olhos
                 ctx.shadowBlur = 10;
                 ctx.shadowColor = '#ffffff';
                 ctx.fillStyle = '#ffffff';
                 ctx.fillRect(-3, -14, 2, 3);
                 ctx.fillRect(1, -14, 2, 3);
                 
-                // Contorno NEON extra brilhante
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = colors.neonPink;
-                ctx.strokeStyle = colors.neonPink;
-                ctx.lineWidth = 2;
-                ctx.strokeRect(-8, -12, 16, 20);
-                
-                // Aura neon quando ativo
-                if (this.active) {
-                    ctx.globalAlpha = 0.5;
-                    ctx.shadowBlur = 40;
-                    ctx.strokeStyle = colors.neonBlue;
-                    ctx.strokeRect(-12, -16, 24, 28);
-                    ctx.globalAlpha = 1;
+                // Indicador de tipo
+                if (this.type === 'janis2') {
+                    ctx.fillStyle = '#ff0000';
                 }
+                
+                ctx.restore();
+            }
+                    
+                    if (this.hitFlash > 0) {
+                        ctx.fillStyle = '#ffffff';
+                    } else {
+                        ctx.fillStyle = colors.enemyGlow;
+                    }
+                    
+                    // Corpo feminino estilizado
+                    ctx.fillRect(-6, -10, 12, 18);
+                    
+                    // Cabeça
+                    ctx.beginPath();
+                    ctx.arc(0, -12, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Cabelo
+                    ctx.fillStyle = '#cc00cc';
+                    ctx.fillRect(-8, -18, 16, 8);
+                    ctx.fillRect(-10, -16, 3, 12);
+                    ctx.fillRect(7, -16, 3, 12);
+                    
+                    // Braços
+                    ctx.fillStyle = colors.enemyGlow;
+                    ctx.fillRect(-10, -8, 4, 10);
+                    ctx.fillRect(6, -8, 4, 10);
+                    
+                    // Arma quando armada
+                    if (this.currentAction === 'wheelie') {
+                        ctx.fillStyle = '#ffff00';
+                        ctx.fillRect(8, -6, 12, 3);
+                    }
+                    
+                    // Pernas
+                    ctx.fillRect(-4, 8, 3, 8);
+                    ctx.fillRect(1, 8, 3, 8);
+                    
+                    // Olhos
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ffffff';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(-3, -14, 2, 3);
+                    ctx.fillRect(1, -14, 2, 3);
+                    
+                    // Indicador de tipo
+                    if (this.type === 'janis2') {
+                        ctx.fillStyle = '#ff0000';
+                        ctx.fillRect(-3, -20, 6, 3);
+                    }
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        // Projétil inimigo
+        class EnemyProjectile {
+            constructor(x, y, angle) {
+                this.x = x;
+                this.y = y;
+                this.speed = 8;
+                this.vx = Math.cos(angle) * this.speed;
+                this.vy = Math.sin(angle) * this.speed;
+                this.size = 4;
+                this.damage = 1;
+                this.color = '#ff00ff';
+                this.life = 60;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                
+                const tileX = Math.floor(this.x / tileSize);
+                const tileY = Math.floor(this.y / tileSize);
+                if (map[tileY] && map[tileY][tileX] === 1) {
+                    return true;
+                }
+                
+                const dx = this.x - player.x;
+                const dy = this.y - player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < player.size + this.size && player.invulnerable <= 0) {
+                    player.health -= this.damage;
+                    player.invulnerable = 60;
+                    game.screenShake = 8;
+                    createBloodSplatter(player.x, player.y, 10);
+                    return true;
+                }
+                
+                return this.life <= 0;
+            }
+            
+            draw() {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                ctx.shadowBlur = 0;
             }
         }
 
         // Função para verificar colisão com paredes
         function checkWallCollision(x, y, size) {
-            // Verifica os 4 cantos da hitbox
             const corners = [
                 { x: x - size/2, y: y - size/2 },
                 { x: x + size/2, y: y - size/2 },
@@ -736,14 +1360,14 @@
                 const tileY = Math.floor(corner.y / tileSize);
                 
                 if (map[tileY] && map[tileY][tileX] === 1) {
-                    return true; // Colidiu
+                    return true;
                 }
             }
             
-            return false; // Sem colisão
+            return false;
         }
 
-        // Sistema de partículas melhorado
+        // Sistema de partículas
         function createParticles(x, y, color, count, speed = 8) {
             for (let i = 0; i < count; i++) {
                 const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
@@ -772,7 +1396,7 @@
             }
         }
 
-        // Projétil melhorado
+        // Projétil do jogador
         class Projectile {
             constructor(x, y, angle) {
                 this.x = x;
@@ -781,9 +1405,10 @@
                 this.vx = Math.cos(angle) * this.speed;
                 this.vy = Math.sin(angle) * this.speed;
                 this.size = 6;
-                this.damage = 20;
+                this.damage = 1;
                 this.trail = [];
                 this.life = 60;
+                this.piercing = false;
             }
 
             update() {
@@ -791,21 +1416,31 @@
                 this.y += this.vy;
                 this.life--;
 
-                // Trail effect
                 this.trail.push({ x: this.x, y: this.y });
                 if (this.trail.length > 5) {
                     this.trail.shift();
                 }
 
-                // Colisão com paredes
                 const tileX = Math.floor(this.x / tileSize);
                 const tileY = Math.floor(this.y / tileSize);
                 if (map[tileY] && map[tileY][tileX] === 1) {
                     createParticles(this.x, this.y, colors.bullet, 5, 4);
                     return true;
                 }
+                
+                let hitObject = false;
+                sceneObjects.forEach((obj, index) => {
+                    if (obj.checkCollision(this.x, this.y, this.size)) {
+                        if (obj.takeDamage(this.damage)) {
+                            sceneObjects.splice(index, 1);
+                        }
+                        createParticles(this.x, this.y, colors.bullet, 3, 3);
+                        hitObject = true;
+                    }
+                });
+                
+                if (hitObject && !this.piercing) return true;
 
-                // Colisão com inimigos
                 let hit = false;
                 enemies.forEach((enemy, index) => {
                     const dx = this.x - enemy.x;
@@ -819,7 +1454,6 @@
                         createBloodSplatter(enemy.x, enemy.y, 10);
                         
                         if (enemy.health <= 0) {
-                            // Morte do inimigo
                             corpses.push({
                                 x: enemy.x,
                                 y: enemy.y,
@@ -836,7 +1470,7 @@
                             game.screenShake = 8;
                         }
                         
-                        hit = true;
+                        if (!this.piercing) hit = true;
                     }
                 });
                 
@@ -844,19 +1478,22 @@
             }
 
             draw() {
-                // Trail
                 this.trail.forEach((point, index) => {
                     ctx.globalAlpha = index / this.trail.length * 0.5;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = colors.bullet;
                     ctx.fillStyle = colors.bullet;
-                    ctx.fillRect(point.x - 2, point.y - 2, 4, 4);
+                    ctx.fillRect(point.x - 3, point.y - 3, 6, 6);
                 });
                 ctx.globalAlpha = 1;
 
-                // Projétil com glow
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 20;
                 ctx.shadowColor = colors.bullet;
                 ctx.fillStyle = colors.bullet;
                 ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(this.x - 2, this.y - 2, 4, 4);
                 ctx.shadowBlur = 0;
             }
         }
@@ -865,55 +1502,165 @@
         function loadLevel(levelIndex) {
             const level = levels[levelIndex];
             
-            // Reseta estado
             enemies.length = 0;
             projectiles.length = 0;
             particles.length = 0;
             corpses.length = 0;
+            sceneObjects.length = 0;
             game.bloodParticles.length = 0;
             game.levelComplete = false;
+            game.bombPlanted = false;
+            game.escapeMode = false;
+            player.hasBomb = false;
             
-            // Posiciona jogador
             player.x = level.playerStart.x;
             player.y = level.playerStart.y;
             player.health = player.maxHealth;
             
-            // Gera mapa do nível
             generateLevelMap(levelIndex);
             
-            // Spawna inimigos do nível
+            if (level.sceneObjects) {
+                level.sceneObjects.forEach(objData => {
+                    sceneObjects.push(new SceneObject(objData.x, objData.y, objData.type));
+                });
+            }
+            
             level.enemies.forEach(enemyData => {
-                const enemy = new Enemy(enemyData.x, enemyData.y, enemyData.type || 'janis');
+                const enemy = new Enemy(enemyData.x, enemyData.y, enemyData.type || 'janis', enemyData.patrol || 'circle');
                 enemies.push(enemy);
             });
             
-            // Mostra mensagem do nível
+            if (level.bombLocation) {
+                bomb.x = level.bombLocation.x;
+                bomb.y = level.bombLocation.y;
+                bomb.planted = false;
+                player.hasBomb = true;
+            }
+            
+            updateObjective(level);
+            
             console.log(`🎮 ${level.message}`);
         }
 
-        // Spawn de inimigos melhorado (só em níveis específicos)
-        function spawnEnemy() {
-            // Só spawna automaticamente após nível 2
-            if (game.currentLevel < 2) return;
+        // Atualiza texto do objetivo
+        function updateObjective(level) {
+            const objDiv = document.getElementById('objective');
+            if (level.bombLocation && !game.bombPlanted) {
+                objDiv.textContent = "OBJETIVO: PLANTE A BOMBA (PRESSIONE E)";
+            } else if (game.escapeMode) {
+                objDiv.textContent = "FUJA! CHEGUE NA SAÍDA!";
+                objDiv.style.color = '#ff0066';
+                objDiv.style.animation = 'blink 0.5s infinite';
+            } else {
+                objDiv.textContent = "OBJETIVO: ELIMINE OS INIMIGOS E SAIA";
+            }
+        }
+
+        // Controles
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
             
+            if (e.key.toLowerCase() === 'r' && game.over) {
+                resetGame();
+            }
+            
+            if (e.key.toLowerCase() === 'e') {
+                const level = levels[game.currentLevel];
+                if (level && level.bombLocation && player.hasBomb && !game.bombPlanted) {
+                    const dx = player.x - bomb.x;
+                    const dy = player.y - bomb.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 50) {
+                        game.bombPlanted = true;
+                        game.escapeMode = true;
+                        game.bombTimer = 30;
+                        player.hasBomb = false;
+                        
+                        createParticles(bomb.x, bomb.y, colors.bombGlow, 20, 5);
+                        game.screenShake = 10;
+                        
+                        document.getElementById('bombTimer').style.display = 'block';
+                        updateObjective(level);
+                        
+                        for (let i = 0; i < 3; i++) {
+                            spawnEnemy();
+                        }
+                    }
+                }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+            // Converte para coordenadas do mundo
+            mouse.worldX = mouse.x + game.cameraX - canvas.width / 2;
+            mouse.worldY = mouse.y + game.cameraY - canvas.height / 2;
+        });
+
+        canvas.addEventListener('mousedown', () => {
+            mouse.pressed = true;
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            mouse.pressed = false;
+        });
+
+        // Reset do jogo
+        function resetGame() {
+            player.health = player.maxHealth;
+            player.x = 200;
+            player.y = 320;
+            player.trail = [];
+            player.currentAction = 'idle';
+            player.hasBomb = false;
+            game.score = 0;
+            game.combo = 1;
+            game.over = false;
+            game.screenShake = 0;
+            game.deathRotation = 0;
+            game.deathRotationSpeed = 0.05;
+            game.bombPlanted = false;
+            game.escapeMode = false;
+            game.bombTimer = 30;
+            game.currentLevel = 0;
+            game.cameraX = player.x;
+            game.cameraY = player.y;
+            enemies.length = 0;
+            projectiles.length = 0;
+            particles.length = 0;
+            corpses.length = 0;
+            sceneObjects.length = 0;
+            game.bloodParticles.length = 0;
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('bombTimer').style.display = 'none';
+            loadLevel(0);
+        }
+
+        // Spawn de inimigos
+        function spawnEnemy() {
             const spawnPoints = [];
             
-            // Encontra pontos válidos de spawn
             for (let i = 0; i < 4; i++) {
                 let x, y;
                 const side = i;
                 
                 switch(side) {
-                    case 0: x = Math.random() * canvas.width; y = 40; break;
-                    case 1: x = canvas.width - 40; y = Math.random() * canvas.height; break;
-                    case 2: x = Math.random() * canvas.width; y = canvas.height - 40; break;
-                    case 3: x = 40; y = Math.random() * canvas.height; break;
+                    case 0: x = Math.random() * WORLD_WIDTH; y = 40; break;
+                    case 1: x = WORLD_WIDTH - 40; y = Math.random() * WORLD_HEIGHT; break;
+                    case 2: x = Math.random() * WORLD_WIDTH; y = WORLD_HEIGHT - 40; break;
+                    case 3: x = 40; y = Math.random() * WORLD_HEIGHT; break;
                 }
                 
                 spawnPoints.push({ x, y });
             }
             
-            // Escolhe o ponto mais distante do jogador
             let bestPoint = spawnPoints[0];
             let maxDist = 0;
             
@@ -929,83 +1676,31 @@
             createParticles(bestPoint.x, bestPoint.y, colors.neonPurple, 10, 5);
         }
 
-        // Controles
-        window.addEventListener('keydown', (e) => {
-            keys[e.key.toLowerCase()] = true;
-            
-            if (e.key.toLowerCase() === 'r' && game.over) {
-                resetGame();
-            }
-        });
-
-        window.addEventListener('keyup', (e) => {
-            keys[e.key.toLowerCase()] = false;
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
-        });
-
-        canvas.addEventListener('mousedown', () => {
-            mouse.pressed = true;
-        });
-
-        canvas.addEventListener('mouseup', () => {
-            mouse.pressed = false;
-        });
-
-        // Reset do jogo
-        function resetGame() {
-            player.health = player.maxHealth;
-            player.x = canvas.width / 2;
-            player.y = canvas.height / 2;
-            player.trail = [];
-            player.currentAction = 'idle';
-            game.score = 0;
-            game.combo = 1;
-            game.over = false;
-            game.screenShake = 0;
-            game.deathRotation = 0;
-            game.deathRotationSpeed = 0.05;
-            enemies.length = 0;
-            projectiles.length = 0;
-            particles.length = 0;
-            corpses.length = 0;
-            game.bloodParticles.length = 0;
-            document.getElementById('gameOver').style.display = 'none';
-        }
-
         // Game loop
         function update() {
             if (game.over) return;
             
             game.time++;
 
-            // Movimento do jogador com colisão
+            // Movimento do jogador
             let dx = 0, dy = 0;
             if (keys['w'] || keys['arrowup']) dy = -1;
             if (keys['s'] || keys['arrowdown']) dy = 1;
             if (keys['a'] || keys['arrowleft']) dx = -1;
             if (keys['d'] || keys['arrowright']) dx = 1;
             
-            // Atualiza direção baseada no movimento
-            if (dx > 0) player.direction = 0;      // Direita
-            else if (dy > 0) player.direction = 1; // Baixo
-            else if (dx < 0) player.direction = 2; // Esquerda
-            else if (dy < 0) player.direction = 3; // Cima
+            if (dx > 0) player.direction = 0;
+            else if (dy > 0) player.direction = 1;
+            else if (dx < 0) player.direction = 2;
+            else if (dy < 0) player.direction = 3;
             
-            // Normaliza movimento diagonal
             if (dx !== 0 && dy !== 0) {
                 dx *= 0.707;
                 dy *= 0.707;
             }
             
-            // Verifica se está se movendo
             player.isMoving = (dx !== 0 || dy !== 0);
             
-            // Define ação atual
             if (player.health <= 0) {
                 player.currentAction = 'death';
             } else if (player.isMoving) {
@@ -1014,18 +1709,15 @@
                 player.currentAction = 'idle';
             }
             
-            // Dash (Space) - Usa sprite de wheelie para atropelar
+            // Dash
             let currentSpeed = player.speed;
             if (keys[' '] && player.dashCooldown <= 0 && player.onBike) {
                 currentSpeed = player.dashSpeed;
                 player.dashCooldown = 30;
-                player.currentAction = 'wheelie'; // FORÇA animação de wheelie
+                player.currentAction = 'wheelie';
                 createParticles(player.x, player.y, colors.neonBlue, 10, 5);
-                
-                // Efeito visual do dash
                 game.screenShake = 5;
                 
-                // Atropela inimigos durante dash
                 enemies.forEach((enemy, index) => {
                     const dx = enemy.x - player.x;
                     const dy = enemy.y - player.y;
@@ -1051,26 +1743,33 @@
                 });
             }
             
-            // Movimento com verificação de colisão
+            // Movimento com colisão
             const nextX = player.x + dx * currentSpeed;
             const nextY = player.y + dy * currentSpeed;
             
-            if (!checkWallCollision(nextX, player.y, player.size)) {
-                player.x = nextX;
-            }
-            if (!checkWallCollision(player.x, nextY, player.size)) {
-                player.y = nextY;
-            }
+            let canMoveX = !checkWallCollision(nextX, player.y, player.size);
+            let canMoveY = !checkWallCollision(player.x, nextY, player.size);
+            
+            sceneObjects.forEach(obj => {
+                if (obj.checkCollision(nextX, player.y, player.size)) canMoveX = false;
+                if (obj.checkCollision(player.x, nextY, player.size)) canMoveY = false;
+            });
+            
+            if (canMoveX) player.x = nextX;
+            if (canMoveY) player.y = nextY;
+            
+            // Limita player aos limites do mundo
+            player.x = Math.max(player.size, Math.min(WORLD_WIDTH - player.size, player.x));
+            player.y = Math.max(player.size, Math.min(WORLD_HEIGHT - player.size, player.y));
             
             if (player.dashCooldown > 0) {
                 player.dashCooldown--;
-                // Mantém sprite de wheelie durante o dash
                 if (player.dashCooldown > 20) {
                     player.currentAction = 'wheelie';
                 }
             }
 
-            // Trail do jogador
+            // Trail
             if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
                 player.trail.push({ 
                     x: player.x, 
@@ -1082,17 +1781,15 @@
                 }
             }
 
-            // Ângulo do jogador
-            player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+            // Ângulo do jogador baseado no mouse do mundo
+            player.angle = Math.atan2(mouse.worldY - player.y, mouse.worldX - player.x);
 
-            // Limites da tela (removido - agora tem colisão com paredes)
-
-            // Animação de pedalar
+            // Animação
             if (player.currentAction === 'ride' && player.isMoving) {
                 player.animTimer++;
-                if (player.animTimer > 6) {  // Velocidade da pedalada ajustada
+                if (player.animTimer > 6) {
                     player.animTimer = 0;
-                    player.animFrame = (player.animFrame + 1) % 2;  // Alterna entre 0 e 1
+                    player.animFrame = (player.animFrame + 1) % 2;
                 }
             } else {
                 player.animFrame = 0;
@@ -1105,7 +1802,6 @@
                 player.attackCooldown = 8;
                 game.screenShake = 3;
                 
-                // Recuo
                 player.x -= Math.cos(player.angle) * 3;
                 player.y -= Math.sin(player.angle) * 3;
             }
@@ -1120,8 +1816,42 @@
                 game.combo = 1;
             }
 
-            // Screen shake decay
+            // Screen shake
             if (game.screenShake > 0) game.screenShake *= 0.9;
+
+            // Atualiza câmera para seguir o jogador
+            game.cameraX = player.x;
+            game.cameraY = player.y;
+            
+            // Limita câmera aos limites do mundo
+            game.cameraX = Math.max(canvas.width / 2, Math.min(WORLD_WIDTH - canvas.width / 2, game.cameraX));
+            game.cameraY = Math.max(canvas.height / 2, Math.min(WORLD_HEIGHT - canvas.height / 2, game.cameraY));
+
+            // Timer da bomba
+            if (game.escapeMode && game.bombPlanted) {
+                game.bombTimer -= 1/60;
+                document.getElementById('timerValue').textContent = Math.ceil(game.bombTimer);
+                
+                if (game.bombTimer <= 0) {
+                    createExplosion(bomb.x, bomb.y, 300);
+                    game.screenShake = 30;
+                    
+                    const dx = player.x - bomb.x;
+                    const dy = player.y - bomb.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < 300) {
+                        player.health = 0;
+                    }
+                    
+                    game.bombPlanted = false;
+                    game.escapeMode = false;
+                    document.getElementById('bombTimer').style.display = 'none';
+                }
+                
+                if (Math.random() < 0.02) {
+                    spawnEnemy();
+                }
+            }
 
             // Atualiza inimigos
             enemies.forEach(enemy => enemy.update());
@@ -1146,127 +1876,132 @@
                 }
             });
 
-            // Verifica se chegou na saída do nível
+            // Verifica saída do nível
             const level = levels[game.currentLevel];
             if (level && level.exit) {
                 const exitDx = player.x - level.exit.x;
                 const exitDy = player.y - level.exit.y;
                 
-                if (Math.abs(exitDx) < level.exit.width/2 && 
-                    Math.abs(exitDy) < level.exit.height/2 &&
-                    enemies.length === 0) {  // Só pode sair se matou todos
+                const canExit = Math.abs(exitDx) < level.exit.width/2 && 
+                               Math.abs(exitDy) < level.exit.height/2;
+                
+                if (canExit) {
+                    let canProceed = false;
                     
-                    // Próximo nível!
-                    game.currentLevel++;
-                    if (game.currentLevel < levels.length) {
-                        loadLevel(game.currentLevel);
-                        createParticles(player.x, player.y, colors.neonBlue, 30, 10);
+                    if (level.bombLocation) {
+                        canProceed = game.bombPlanted || (!player.hasBomb && enemies.length === 0);
                     } else {
-                        // Vitória! (por enquanto volta pro início)
-                        game.currentLevel = 0;
-                        loadLevel(0);
+                        canProceed = enemies.length === 0;
+                    }
+                    
+                    if (canProceed) {
+                        game.currentLevel++;
+                        if (game.currentLevel < levels.length) {
+                            loadLevel(game.currentLevel);
+                            createParticles(player.x, player.y, colors.neonBlue, 30, 10);
+                        } else {
+                            game.currentLevel = 0;
+                            loadLevel(0);
+                        }
                     }
                 }
             }
-            
-            // Spawn de inimigos (aumenta com o tempo)
-            const spawnRate = game.currentLevel > 1 ? Math.min(0.02 + (game.time / 10000), 0.05) : 0;
-            if (Math.random() < spawnRate) {
-                spawnEnemy();
-            }
 
-            // Game over com ROTAÇÃO dramática
+            // Game over
             if (player.health <= 0 && !game.over) {
                 game.over = true;
                 player.currentAction = 'death';
-                // Define ponto focal na posição da morte
-                game.cameraX = player.x;
-                game.cameraY = player.y;
-                // Cria explosão de partículas na morte
                 createBloodSplatter(player.x, player.y, 50);
                 createParticles(player.x, player.y, colors.enemy, 30, 15);
                 game.screenShake = 20;
-                
-                // Inicia rotação
                 game.deathRotation = 0;
-                console.log('MORTE! Iniciando rotação');
                 
-                // Delay para mostrar game over
                 setTimeout(() => {
                     document.getElementById('gameOver').style.display = 'block';
                 }, 2000);
             }
             
-            // Anima rotação da morte
             if (game.over) {
                 game.deathRotation += game.deathRotationSpeed;
-                // Desacelera a rotação
                 if (game.deathRotationSpeed > 0.001) {
                     game.deathRotationSpeed *= 0.98;
                 }
             }
 
             // Atualiza UI
-            document.getElementById('healthBar').style.width = (player.health / player.maxHealth * 100) + '%';
+            const heartsDiv = document.querySelector('#ui > div:first-child');
+            if (heartsDiv) {
+                heartsDiv.textContent = '❤️'.repeat(Math.max(0, player.health));
+            }
             document.getElementById('score').textContent = game.score;
             document.getElementById('combo').textContent = game.combo;
+            document.getElementById('debugLevel').textContent = game.currentLevel + 1;
+            document.getElementById('debugEnemies').textContent = enemies.length;
         }
 
         function draw() {
-            // Salva estado do canvas
             ctx.save();
             
-            // ROTAÇÃO DRAMÁTICA NA MORTE
+            // Translação da câmera
+            const offsetX = canvas.width / 2 - game.cameraX;
+            const offsetY = canvas.height / 2 - game.cameraY;
+            
+            // Rotação na morte
             if (game.over) {
-                // Rotaciona em torno do centro da tela
                 ctx.translate(canvas.width/2, canvas.height/2);
                 ctx.rotate(game.deathRotation);
                 ctx.translate(-canvas.width/2, -canvas.height/2);
                 
-                // Adiciona um leve zoom também
                 const zoom = 1 + (game.deathRotation / 10);
                 ctx.translate(canvas.width/2, canvas.height/2);
                 ctx.scale(zoom, zoom);
-                ctx.translate(-game.cameraX, -game.cameraY);
-            } else if (game.screenShake > 1) {
-                // Screen shake normal (não na morte)
+                ctx.translate(-canvas.width/2, -canvas.height/2);
+            }
+            
+            // Screen shake
+            if (game.screenShake > 1) {
                 ctx.translate(
                     (Math.random() - 0.5) * game.screenShake,
                     (Math.random() - 0.5) * game.screenShake
                 );
             }
+            
+            // Aplica offset da câmera
+            ctx.translate(offsetX, offsetY);
 
-            // Limpa canvas com cor de fundo
+            // Fundo
             ctx.fillStyle = colors.floor;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
 
-            // Padrão de asfalto
+            // Grid do asfalto
             ctx.strokeStyle = '#3a3a3a';
             ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += tileSize) {
+            for (let x = 0; x < WORLD_WIDTH; x += tileSize) {
                 ctx.beginPath();
                 ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
+                ctx.lineTo(x, WORLD_HEIGHT);
                 ctx.stroke();
             }
-            for (let y = 0; y < canvas.height; y += tileSize) {
+            for (let y = 0; y < WORLD_HEIGHT; y += tileSize) {
                 ctx.beginPath();
                 ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
+                ctx.lineTo(WORLD_WIDTH, y);
                 ctx.stroke();
             }
             
-            // Marcações de asfalto (faixas)
+            // Faixas
             ctx.strokeStyle = '#444';
             ctx.setLineDash([20, 10]);
             ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(canvas.width/2, 0);
-            ctx.lineTo(canvas.width/2, canvas.height);
-            ctx.stroke();
+            for (let x = 400; x < WORLD_WIDTH; x += 400) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, WORLD_HEIGHT);
+                ctx.stroke();
+            }
             ctx.setLineDash([]);
 
-            // Sangue no chão
+            // Sangue
             ctx.globalAlpha = 0.7;
             game.bloodParticles.forEach(blood => {
                 ctx.fillStyle = blood.color;
@@ -1276,7 +2011,7 @@
             });
             ctx.globalAlpha = 1;
 
-            // Desenha mapa/paredes
+            // Paredes
             ctx.shadowBlur = 10;
             ctx.shadowColor = colors.neonPurple;
             for (let y = 0; y < map.length; y++) {
@@ -1284,8 +2019,6 @@
                     if (map[y][x] === 1) {
                         ctx.fillStyle = colors.wall;
                         ctx.fillRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);
-                        
-                        // Borda neon
                         ctx.strokeStyle = colors.neonPurple;
                         ctx.strokeRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);
                     }
@@ -1293,7 +2026,60 @@
             }
             ctx.shadowBlur = 0;
 
-            // Desenha corpos
+            // Objetos de cenário
+            sceneObjects.forEach(obj => obj.draw());
+
+            // Local da bomba
+            const level = levels[game.currentLevel];
+            if (level && level.bombLocation && !game.bombPlanted && player.hasBomb) {
+                ctx.save();
+                ctx.translate(bomb.x, bomb.y);
+                
+                const pulse = Math.sin(game.time * 0.05) * 0.3 + 0.7;
+                ctx.globalAlpha = pulse;
+                ctx.strokeStyle = colors.bombGlow;
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = colors.bombGlow;
+                ctx.beginPath();
+                ctx.arc(0, 0, 30, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.fillStyle = colors.bombGlow;
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('X', 0, 0);
+                
+                ctx.restore();
+            }
+            
+            // Bomba plantada
+            if (game.bombPlanted) {
+                ctx.save();
+                ctx.translate(bomb.x, bomb.y);
+                
+                const blink = Math.sin(game.time * bomb.blinkSpeed) > 0;
+                if (blink) {
+                    ctx.fillStyle = colors.bombGlow;
+                    ctx.shadowBlur = 30;
+                    ctx.shadowColor = colors.bombGlow;
+                    ctx.fillRect(-15, -15, 30, 30);
+                    
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('💣', 0, 0);
+                }
+                
+                if (game.bombTimer < 10) bomb.blinkSpeed = 0.3;
+                else if (game.bombTimer < 20) bomb.blinkSpeed = 0.15;
+                
+                ctx.restore();
+            }
+
+            // Corpos
             ctx.globalAlpha = 0.5;
             corpses.forEach(corpse => {
                 ctx.save();
@@ -1305,7 +2091,7 @@
             });
             ctx.globalAlpha = 1;
 
-            // Desenha partículas
+            // Partículas
             particles.forEach(particle => {
                 ctx.globalAlpha = particle.life / particle.maxLife;
                 ctx.fillStyle = particle.color;
@@ -1316,13 +2102,13 @@
             ctx.globalAlpha = 1;
             ctx.shadowBlur = 0;
 
-            // Desenha inimigos
+            // Inimigos
             enemies.forEach(enemy => enemy.draw());
 
-            // Desenha projéteis
+            // Projéteis
             projectiles.forEach(projectile => projectile.draw());
 
-            // Desenha trail do jogador
+            // Trail do jogador
             player.trail.forEach((point, index) => {
                 ctx.globalAlpha = index / player.trail.length * 0.5;
                 ctx.fillStyle = colors.player;
@@ -1334,122 +2120,80 @@
             });
             ctx.globalAlpha = 1;
 
-            // Desenha jogador
+            // Jogador
             ctx.save();
             ctx.translate(player.x, player.y);
             
-            // Rotação suave para a mira (só visual, não afeta o sprite)
-            const displayAngle = player.angle;
-            
-            // Pisca quando invulnerável
             if (player.invulnerable % 10 < 5) {
-                // Se tem sprite do Mad Max, usa sprite
-                if (sprites.loaded && sprites.player[player.currentAction]) {
-                    const spriteArray = sprites.player[player.currentAction];
-                    let sprite;
-                    
-                    // Se está pedalando, alterna entre frames
-                    if (player.currentAction === 'ride' && player.isMoving) {
-                        // Calcula índice: direção * 2 + frame de animação
-                        const frameIndex = player.direction * 2 + player.animFrame;
-                        sprite = spriteArray[frameIndex];
-                    } else {
-                        // Para outras ações, usa índice direto pela direção
-                        sprite = spriteArray[player.direction];
-                    }
-                    
-                    if (sprite && sprite.complete) {
-                        // Desenha o sprite do Mad Max
-                        ctx.drawImage(
-                            sprite,
-                            -32, -32,  // Centraliza o sprite de 64x64
-                            64, 64
-                        );
-                    }
-                } else {
-                    // Fallback para desenho procedural
-                    ctx.rotate(displayAngle);
-                    
-                    // Glow
-                    ctx.shadowBlur = 20;
-                    ctx.shadowColor = player.color;
-                    
-                    // Corpo do jogador (design cyberpunk)
-                    ctx.fillStyle = player.color;
-                    ctx.beginPath();
-                    ctx.moveTo(player.size/2, 0);
-                    ctx.lineTo(-player.size/3, -player.size/3);
-                    ctx.lineTo(-player.size/2, 0);
-                    ctx.lineTo(-player.size/3, player.size/3);
-                    ctx.closePath();
-                    ctx.fill();
-                    
-                    // Detalhe central
-                    ctx.fillStyle = '#fff';
-                    ctx.fillRect(-2, -2, 8, 4);
-                }
+                ctx.rotate(player.angle);
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = player.color;
+                ctx.fillStyle = player.color;
+                ctx.beginPath();
+                ctx.moveTo(player.size/2, 0);
+                ctx.lineTo(-player.size/3, -player.size/3);
+                ctx.lineTo(-player.size/2, 0);
+                ctx.lineTo(-player.size/3, player.size/3);
+                ctx.closePath();
+                ctx.fill();
                 
-                // NÃO desenha linha de mira no player quando tem sprite
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(-2, -2, 8, 4);
+                
+                if (player.hasBomb) {
+                    ctx.fillStyle = colors.bombGlow;
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('💣', 0, -20);
+                }
             }
             
             ctx.restore();
             
-            // Efeito de scanlines
-
-            // Desenha saída do nível
-            const level = levels[game.currentLevel];
-            if (level && level.exit && enemies.length === 0) {  // Só mostra se matou todos
-                ctx.save();
-                ctx.fillStyle = colors.neonBlue;
-                ctx.strokeStyle = colors.neonBlue;
-                ctx.shadowBlur = 20;
-                ctx.shadowColor = colors.neonBlue;
-                ctx.lineWidth = 3;
+            // Saída do nível
+            if (level && level.exit) {
+                const canExit = (level.bombLocation && (game.bombPlanted || !player.hasBomb)) || 
+                               (!level.bombLocation && enemies.length === 0);
                 
-                // Desenha portal de saída
-                ctx.strokeRect(
-                    level.exit.x - level.exit.width/2,
-                    level.exit.y - level.exit.height/2,
-                    level.exit.width,
-                    level.exit.height
-                );
-                
-                // Efeito pulsante
-                ctx.globalAlpha = Math.sin(game.time * 0.05) * 0.3 + 0.3;
-                ctx.fillRect(
-                    level.exit.x - level.exit.width/2,
-                    level.exit.y - level.exit.height/2,
-                    level.exit.width,
-                    level.exit.height
-                );
-                
-                ctx.restore();
+                if (canExit) {
+                    ctx.save();
+                    ctx.fillStyle = colors.neonBlue;
+                    ctx.strokeStyle = colors.neonBlue;
+                    ctx.shadowBlur = 20;
+                    ctx.shadowColor = colors.neonBlue;
+                    ctx.lineWidth = 3;
+                    
+                    ctx.strokeRect(
+                        level.exit.x - level.exit.width/2,
+                        level.exit.y - level.exit.height/2,
+                        level.exit.width,
+                        level.exit.height
+                    );
+                    
+                    ctx.globalAlpha = Math.sin(game.time * 0.05) * 0.3 + 0.3;
+                    ctx.fillRect(
+                        level.exit.x - level.exit.width/2,
+                        level.exit.y - level.exit.height/2,
+                        level.exit.width,
+                        level.exit.height
+                    );
+                    
+                    ctx.restore();
+                }
             }
             
-            // UI do nível
+            // Restaura contexto antes de desenhar UI
+            ctx.restore();
+            
+            // UI (não afetada pela câmera)
             if (level) {
                 ctx.fillStyle = colors.neonPurple;
                 ctx.font = 'bold 16px Orbitron';
                 ctx.textAlign = 'right';
                 ctx.fillText(`NÍVEL ${game.currentLevel + 1}: ${level.name}`, canvas.width - 20, 40);
-                
-                // UI de vida (só 3 corações)
-                ctx.save();
-                ctx.fillStyle = colors.neonPink;
-                ctx.font = 'bold 24px Arial';
-                ctx.textAlign = 'left';
-                ctx.fillText('❤️'.repeat(player.health), 20, 90);
-                ctx.restore();
-                
-                // Mensagem se precisa matar inimigos
-                if (level.exit && enemies.length > 0) {
-                    ctx.fillStyle = colors.enemy;
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`ELIMINE ${enemies.length} INIMIGO${enemies.length > 1 ? 'S' : ''}`, canvas.width/2, 60);
-                }
             }
             
-            // Efeito de scanlines
+            // Scanlines
             ctx.globalAlpha = 0.05;
             for (let y = 0; y < canvas.height; y += 4) {
                 ctx.fillStyle = '#fff';
@@ -1466,8 +2210,6 @@
             gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            ctx.restore();
         }
 
         function gameLoop() {
@@ -1476,9 +2218,71 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // Inicializa o jogo
+        // Inicializa
         loadLevel(0);
+        game.cameraX = player.x;
+        game.cameraY = player.y;
         gameLoop();
+        
+        // ========== ORIENTAÇÕES PARA SPRITES ==========
+        /*
+        SPRITES NECESSÁRIOS PARA COMPLETAR O JOGO:
+        
+        1. PERSONAGEM PRINCIPAL (Mad Max) - JÁ IMPLEMENTADO ✅
+           - madmax000-015.png (16 sprites)
+        
+        2. INIMIGOS (Janis) - PARCIALMENTE IMPLEMENTADO
+           - janis000-015.png (16 sprites) 
+           - janis2000-015.png (16 sprites)
+           Você já tem esses arquivos, o código tentará carregá-los automaticamente
+        
+        3. OBJETOS DE CENÁRIO - NOVOS SPRITES NECESSÁRIOS:
+           
+           a) CARRO (car.png) - Sugestão 64x40 pixels
+              - Vista top-down de um carro
+              - Cores: cinza escuro (#444) com detalhes
+              - Pode ter versões destruídas (car_destroyed.png)
+           
+           b) POSTE DE LUZ (post.png) - Sugestão 32x32 pixels
+              - Círculo com luz amarela no topo
+              - Base cinza escura
+              - Efeito de brilho seria bom
+           
+           c) BARRIL EXPLOSIVO (barrel.png) - Sugestão 32x32 pixels
+              - Barril vermelho/laranja
+              - Símbolo de perigo (⚠) ou caveira
+              - Versão explodida opcional
+        
+        4. EFEITOS ESPECIAIS (OPCIONAIS):
+           - explosion_001-008.png - Animação de explosão
+           - blood_splatter.png - Manchas de sangue
+           - bullet_impact.png - Impacto de tiro
+           - dash_trail.png - Rastro do dash
+        
+        5. TILES DO CENÁRIO (OPCIONAIS):
+           - asphalt.png - Textura do asfalto (32x32)
+           - wall.png - Textura das paredes roxas (32x32)
+           - crack001-003.png - Rachaduras no chão
+        
+        6. UI ELEMENTS (OPCIONAIS):
+           - heart_full.png - Coração cheio
+           - heart_empty.png - Coração vazio
+           - bomb_icon.png - Ícone da bomba
+           - arrow.png - Seta indicadora
+        
+        COMO IMPLEMENTAR OS SPRITES:
+        1. Crie os arquivos PNG com fundo transparente
+        2. Coloque na mesma pasta do index.html
+        3. O código já tem fallback procedural se não encontrar
+        4. Para testar: abra o console (F12) e veja se carregou
+        
+        TAMANHOS RECOMENDADOS:
+        - Personagens: 64x64 pixels
+        - Objetos grandes: 64x40 pixels
+        - Objetos pequenos: 32x32 pixels
+        - Tiles: 32x32 pixels
+        - UI: 24x24 pixels
+        */
     </script>
 </body>
 </html>
