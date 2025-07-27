@@ -1,25 +1,3 @@
-// Atualiza câmera para seguir o player
-            game.camera.x = player.x - game.camera.width / 2;
-            game.camera.y = player.y - game.camera.height / 2;
-            
-            // Limita câmera aos bounds do mundo
-            game.camera.x = Math.max(0, Math.min(worldWidth - game.camera.width, game.camera.x));
-            game.camera.y = Math.max(0, Math.min(worldHeight - game.camera.height, game.camera.y));
-            
-            // Atualiza debug info
-            document.getElementById('debugLevel').textContent = game.currentLevel + 1;
-            document.getElementById('debugEnemies').textContent = enemies.length;        #debugInfo {
-            position: absolute;
-            bottom: 50px;
-            left: 20px;
-            color: #ffffff;  /* Texto branco */
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border: 1px solid #00ff00;
-            max-width: 300px;
-            text-shadow: 0 0 5px #00ff00;
         }<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -128,6 +106,28 @@
         }
     </style>
 </head>
+            // Atualiza câmera para seguir o player
+            game.camera.x = player.x - game.camera.width / 2;
+            game.camera.y = player.y - game.camera.height / 2;
+            
+            // Limita câmera aos bounds do mundo
+            game.camera.x = Math.max(0, Math.min(worldWidth - game.camera.width, game.camera.x));
+            game.camera.y = Math.max(0, Math.min(worldHeight - game.camera.height, game.camera.y));
+            
+            // Atualiza debug info
+            document.getElementById('debugLevel').textContent = game.currentLevel + 1;
+            document.getElementById('debugEnemies').textContent = enemies.length;        #debugInfo {
+            position: absolute;
+            bottom: 50px;
+            left: 20px;
+            color: #ffffff;  /* Texto branco */
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border: 1px solid #00ff00;
+            max-width: 300px;
+            text-shadow: 0 0 5px #00ff00;
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
