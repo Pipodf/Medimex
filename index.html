@@ -1,4 +1,17 @@
-<!DOCTYPE html>
+// Atualiza debug info
+            document.getElementById('debugLevel').textContent = game.currentLevel + 1;
+            document.getElementById('debugEnemies').textContent = enemies.length;        #debugInfo {
+            position: absolute;
+            bottom: 50px;
+            left: 20px;
+            color: #00ff00;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 1px solid #00ff00;
+            max-width: 300px;
+        }<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -43,7 +56,13 @@
         }
         
         .ui-bar {
-            display: none;  /* Esconde a barra de vida */
+            margin: 10px 0;
+            width: 200px;
+            height: 20px;
+            border: 2px solid #ff0066;
+            background: rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
         }
         
         .ui-bar-fill {
@@ -106,35 +125,16 @@
         }
     </style>
 </head>
-            // Atualiza câmera para seguir o player
-            game.camera.x = player.x - game.camera.width / 2;
-            game.camera.y = player.y - game.camera.height / 2;
-            
-            // Limita câmera aos bounds do mundo
-            game.camera.x = Math.max(0, Math.min(worldWidth - game.camera.width, game.camera.x));
-            game.camera.y = Math.max(0, Math.min(worldHeight - game.camera.height, game.camera.y));
-            
-            // Atualiza debug info
-            document.getElementById('debugLevel').textContent = game.currentLevel + 1;
-            document.getElementById('debugEnemies').textContent = enemies.length;        #debugInfo {
-            position: absolute;
-            bottom: 50px;
-            left: 20px;
-            color: #ffffff;  /* Texto branco */
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border: 1px solid #00ff00;
-            max-width: 300px;
-            text-shadow: 0 0 5px #00ff00;
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="ui">
-            <div style="font-size: 32px;">❤️<span style="opacity:0.3">❤️❤️</span></div>
-            <div style="margin-top: 10px;">PONTOS: <span id="score">0</span></div>
-            <div style="font-size: 14px; margin-top: 10px; color: #00ffff;">
+            <div>VIDA</div>
+            <div class="ui-bar">
+                <div class="ui-bar-fill" id="healthBar" style="width: 100%"></div>
+            </div>
+            <div>PONTOS: <span id="score">0</span></div>
+            <div style="font-size: 14px; margin-top: 20px; color: #00ffff;">
                 COMBO: x<span id="combo">1</span>
             </div>
         </div>
@@ -163,38 +163,37 @@
     </audio>
 
     <script>
-        // Sistema de áudio FORÇADO
+        // Sistema de áudio
         const gameMusic = document.getElementById('gameMusic');
-        gameMusic.volume = 0.5;
+        gameMusic.volume = 0.5;  // Volume em 50%
+        let musicStarted = false;
         
         function toggleMusic() {
             if (gameMusic.paused) {
-                gameMusic.play().catch(e => console.log('Erro:', e));
+                gameMusic.play().catch(e => console.log('Erro ao tocar música:', e));
             } else {
                 gameMusic.pause();
             }
         }
         
-        // Força tocar música após 1 segundo
-        setTimeout(() => {
-            gameMusic.play().catch(e => {
-                console.log('Música bloqueada. Clique em qualquer lugar.');
-                // Tenta novamente no primeiro clique
-                document.addEventListener('click', () => {
-                    gameMusic.play();
-                }, { once: true });
-            });
-        }, 1000);
+        // Tenta tocar música no primeiro clique
+        function startMusic() {
+            if (!musicStarted) {
+                musicStarted = true;
+                gameMusic.play().catch(e => {
+                    console.log('Música bloqueada pelo navegador. Clique no botão de música.');
+                });
+            }
+        }
+        
+        // Adiciona listeners para iniciar música
+        window.addEventListener('click', startMusic, { once: true });
+        window.addEventListener('keydown', startMusic, { once: true });
 
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        // Canvas do tamanho da viewport
         canvas.width = 960;
         canvas.height = 640;
-        
-        // Mundo do jogo é maior
-        const worldWidth = 2880;  // 3x maior
-        const worldHeight = 640;
 
         // Configure melhor qualidade de renderização
         ctx.imageSmoothingEnabled = false;
@@ -214,13 +213,7 @@
             cameraX: 0,
             cameraY: 0,
             currentLevel: 0,  // Nível atual
-            levelComplete: false,
-            camera: {  // Sistema de câmera
-                x: 0,
-                y: 0,
-                width: 960,  // Área visível (tamanho original)
-                height: 640
-            }
+            levelComplete: false
         };
 
         // Paleta de cores neon
@@ -410,8 +403,8 @@
             x: canvas.width / 2,
             y: canvas.height / 2,
             size: 24,
-            speed: 7,  // Aumentado de 5 para 7
-            dashSpeed: 20,  // Aumentado de 15 para 20
+            speed: 5,
+            dashSpeed: 15,
             health: 3,
             maxHealth: 3,
             color: colors.player,
@@ -447,7 +440,7 @@
                 // Nível 1: Entrada
                 name: "Entrada do Território",
                 playerStart: { x: 100, y: 320 },
-                exit: { x: 2760, y: 320, width: 60, height: 100 },  // Saída no final
+                exit: { x: 860, y: 320, width: 60, height: 100 },
                 enemies: [],  // Sem inimigos no primeiro nível
                 message: "Entre no território inimigo..."
             },
@@ -455,11 +448,10 @@
                 // Nível 2: Primeiro Confronto
                 name: "Zona de Patrulha",
                 playerStart: { x: 100, y: 320 },
-                exit: { x: 2760, y: 320, width: 60, height: 100 },  // Saída no final do mapa largo
+                exit: { x: 860, y: 320, width: 60, height: 100 },
                 enemies: [
-                    { x: 800, y: 200, type: 'janis' },
-                    { x: 1600, y: 400, type: 'janis2' },
-                    { x: 2400, y: 300, type: 'janis' }
+                    { x: 400, y: 200, type: 'janis' },
+                    { x: 600, y: 400, type: 'janis2' }
                 ],
                 message: "Cuidado! Guardas à frente!"
             }
@@ -467,8 +459,8 @@
 
         // Mapa melhorado
         const tileSize = 32;
-        const mapWidth = Math.floor(worldWidth / tileSize);
-        const mapHeight = Math.floor(worldHeight / tileSize);
+        const mapWidth = Math.floor(canvas.width / tileSize);
+        const mapHeight = Math.floor(canvas.height / tileSize);
         let map = [];
 
         // Função para gerar mapa do nível
@@ -487,36 +479,26 @@
                 }
             }
             
-            // Adiciona obstáculos baseado no nível (evitando spawn de personagens)
+            // Adiciona obstáculos baseado no nível
             if (levelIndex === 0) {
                 // Nível 1: Corredor simples
                 for (let y = 5; y < mapHeight - 5; y++) {
                     if (y < 8 || y > 11) {
-                        map[y][Math.floor(mapWidth / 3)] = 1;
-                        map[y][Math.floor(2 * mapWidth / 3)] = 1;
+                        map[y][Math.floor(mapWidth / 2)] = 1;
                     }
                 }
             } else {
-                // Outros níveis: obstáculos aleatórios (longe dos spawns)
-                for (let i = 0; i < 20 + levelIndex * 5; i++) {
-                    const x = Math.floor(Math.random() * (mapWidth - 8)) + 4;
-                    const y = Math.floor(Math.random() * (mapHeight - 8)) + 4;
-                    const w = Math.floor(Math.random() * 2) + 1;
-                    const h = Math.floor(Math.random() * 2) + 1;
+                // Outros níveis: obstáculos aleatórios
+                for (let i = 0; i < 10 + levelIndex * 3; i++) {
+                    const x = Math.floor(Math.random() * (mapWidth - 4)) + 2;
+                    const y = Math.floor(Math.random() * (mapHeight - 4)) + 2;
+                    const w = Math.floor(Math.random() * 3) + 1;
+                    const h = Math.floor(Math.random() * 3) + 1;
                     
-                    // Evita colocar perto dos spawns conhecidos
-                    let tooClose = false;
-                    levels[levelIndex].enemies.forEach(enemy => {
-                        const dist = Math.sqrt(Math.pow(x * tileSize - enemy.x, 2) + Math.pow(y * tileSize - enemy.y, 2));
-                        if (dist < 100) tooClose = true;
-                    });
-                    
-                    if (!tooClose) {
-                        for (let dy = 0; dy < h; dy++) {
-                            for (let dx = 0; dx < w; dx++) {
-                                if (x + dx < mapWidth - 1 && y + dy < mapHeight - 1) {
-                                    map[y + dy][x + dx] = 1;
-                                }
+                    for (let dy = 0; dy < h; dy++) {
+                        for (let dx = 0; dx < w; dx++) {
+                            if (x + dx < mapWidth - 1 && y + dy < mapHeight - 1) {
+                                map[y + dy][x + dx] = 1;
                             }
                         }
                     }
@@ -539,7 +521,7 @@
                 this.color = '#ff00ff';  // FORÇA cor neon
                 this.angle = 0;
                 this.type = type;  // 'janis' ou 'janis2'
-                this.behavior = Math.random() > 0.5 ? 'patrol' : 'normal';  // Patrulha ou normal
+                this.behavior = Math.random() > 0.7 ? 'rusher' : 'normal';
                 this.glowIntensity = 0;
                 this.hitFlash = 0;
                 this.active = false;
@@ -548,28 +530,6 @@
                 this.direction = 0;
                 this.animFrame = 0;
                 this.animTimer = 0;
-                this.visionAngle = Math.PI / 3;  // 60 graus de visão
-                
-                // Para patrulha
-                this.patrolPath = [];
-                this.patrolIndex = 0;
-                if (this.behavior === 'patrol') {
-                    this.createPatrolPath();
-                }
-            }
-            
-            createPatrolPath() {
-                // Cria um caminho de patrulha simples
-                const centerX = this.x;
-                const centerY = this.y;
-                const radius = 100;
-                
-                this.patrolPath = [
-                    { x: centerX + radius, y: centerY },
-                    { x: centerX, y: centerY + radius },
-                    { x: centerX - radius, y: centerY },
-                    { x: centerX, y: centerY - radius }
-                ];
             }
 
             update() {
@@ -577,56 +537,25 @@
                 const dy = player.y - this.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                // Verifica se player está no cone de visão
-                const angleToPlayer = Math.atan2(dy, dx);
-                const angleDiff = Math.abs(angleToPlayer - this.angle);
-                const inVisionCone = angleDiff < this.visionAngle / 2 && distance < this.detectionRange;
-                
-                // Verifica linha de visão
+                // Verifica linha de visão antes de ativar
                 const hasLineOfSight = this.checkLineOfSight(player.x, player.y);
                 
-                // Ativa quando vê o player
-                if (!this.active && inVisionCone && hasLineOfSight) {
+                // Ativa inimigo quando player chega perto E tem linha de visão
+                if (!this.active && distance < this.detectionRange && hasLineOfSight) {
                     this.active = true;
                     this.currentAction = 'wheelie'; // Fica armado!
                     createParticles(this.x, this.y, colors.neonPink, 10, 5);
                 }
                 
-                // Se está patrulhando e não viu o player
-                if (this.behavior === 'patrol' && !this.active) {
-                    const target = this.patrolPath[this.patrolIndex];
-                    const pdx = target.x - this.x;
-                    const pdy = target.y - this.y;
-                    const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
-                    
-                    if (pdist < 10) {
-                        // Chegou no ponto, vai pro próximo
-                        this.patrolIndex = (this.patrolIndex + 1) % this.patrolPath.length;
-                    } else {
-                        // Move para o ponto
-                        this.x += (pdx / pdist) * this.speed * 0.5;
-                        this.y += (pdy / pdist) * this.speed * 0.5;
-                        this.angle = Math.atan2(pdy, pdx);
-                        this.currentAction = 'ride';
-                        
-                        // Anima
-                        this.animTimer++;
-                        if (this.animTimer > 6) {
-                            this.animTimer = 0;
-                            this.animFrame = (this.animFrame + 1) % 2;
-                        }
-                    }
-                }
+                // Atualiza direção
+                if (dx > 0) this.direction = 0;      // Direita
+                else if (dy > 0) this.direction = 1; // Baixo
+                else if (dx < 0) this.direction = 2; // Esquerda
+                else if (dy < 0) this.direction = 3; // Cima
                 
-                // Atualiza direção baseado no ângulo
-                if (this.angle > -Math.PI/4 && this.angle <= Math.PI/4) this.direction = 0; // Direita
-                else if (this.angle > Math.PI/4 && this.angle <= 3*Math.PI/4) this.direction = 1; // Baixo
-                else if (this.angle > 3*Math.PI/4 || this.angle <= -3*Math.PI/4) this.direction = 2; // Esquerda
-                else this.direction = 3; // Cima
-                
-                // Persegue se está ativo
+                // Só se move se estiver ativo
                 if (this.active && distance > 0) {
-                    const moveSpeed = this.speed;
+                    const moveSpeed = this.behavior === 'rusher' ? this.speed * 1.5 : this.speed;
                     
                     // Movimento com colisão
                     const nextX = this.x + (dx / distance) * moveSpeed;
@@ -697,27 +626,6 @@
             }
 
             draw() {
-                // Primeiro desenha o cone de visão
-                if (!this.active) {
-                    ctx.save();
-                    ctx.globalAlpha = 0.2;
-                    ctx.fillStyle = '#ff0066';
-                    ctx.strokeStyle = '#ff0066';
-                    ctx.lineWidth = 1;
-                    
-                    // Desenha cone de visão
-                    ctx.beginPath();
-                    ctx.moveTo(this.x, this.y);
-                    const leftAngle = this.angle - this.visionAngle / 2;
-                    const rightAngle = this.angle + this.visionAngle / 2;
-                    ctx.arc(this.x, this.y, this.detectionRange, leftAngle, rightAngle);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
-                    ctx.restore();
-                }
-                
-                // Depois desenha o inimigo
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
@@ -1036,9 +944,8 @@
 
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
-            // Ajusta posição do mouse com a câmera
-            mouse.x = e.clientX - rect.left + game.camera.x;
-            mouse.y = e.clientY - rect.top + game.camera.y;
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
         });
 
         canvas.addEventListener('mousedown', () => {
@@ -1178,9 +1085,7 @@
             // Ângulo do jogador
             player.angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
 
-            // Limites do mundo (não da tela)
-            player.x = Math.max(player.size, Math.min(worldWidth - player.size, player.x));
-            player.y = Math.max(player.size, Math.min(worldHeight - player.size, player.y));
+            // Limites da tela (removido - agora tem colisão com paredes)
 
             // Animação de pedalar
             if (player.currentAction === 'ride' && player.isMoving) {
@@ -1301,7 +1206,7 @@
                 }
             }
 
-            // Atualiza UI após desenhar barra
+            // Atualiza UI
             document.getElementById('healthBar').style.width = (player.health / player.maxHealth * 100) + '%';
             document.getElementById('score').textContent = game.score;
             document.getElementById('combo').textContent = game.combo;
@@ -1317,42 +1222,37 @@
                 ctx.translate(canvas.width/2, canvas.height/2);
                 ctx.rotate(game.deathRotation);
                 ctx.translate(-canvas.width/2, -canvas.height/2);
-            }
-            
-            // Aplica câmera (translada o mundo)
-            ctx.save();
-            ctx.translate(-game.camera.x, -game.camera.y);
-            
-            // Screen shake (aplicado após câmera)
-            if (game.screenShake > 1) {
+                
+                // Adiciona um leve zoom também
+                const zoom = 1 + (game.deathRotation / 10);
+                ctx.translate(canvas.width/2, canvas.height/2);
+                ctx.scale(zoom, zoom);
+                ctx.translate(-game.cameraX, -game.cameraY);
+            } else if (game.screenShake > 1) {
+                // Screen shake normal (não na morte)
                 ctx.translate(
                     (Math.random() - 0.5) * game.screenShake,
                     (Math.random() - 0.5) * game.screenShake
                 );
             }
 
-            // Limpa apenas a área visível
+            // Limpa canvas com cor de fundo
             ctx.fillStyle = colors.floor;
-            ctx.fillRect(game.camera.x, game.camera.y, game.camera.width, game.camera.height);
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Padrão de asfalto (apenas área visível)
-            const startX = Math.floor(game.camera.x / tileSize) * tileSize;
-            const endX = Math.ceil((game.camera.x + game.camera.width) / tileSize) * tileSize;
-            const startY = Math.floor(game.camera.y / tileSize) * tileSize;
-            const endY = Math.ceil((game.camera.y + game.camera.height) / tileSize) * tileSize;
-            
+            // Padrão de asfalto
             ctx.strokeStyle = '#3a3a3a';
             ctx.lineWidth = 1;
-            for (let x = startX; x < endX; x += tileSize) {
+            for (let x = 0; x < canvas.width; x += tileSize) {
                 ctx.beginPath();
-                ctx.moveTo(x, startY);
-                ctx.lineTo(x, endY);
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
                 ctx.stroke();
             }
-            for (let y = startY; y < endY; y += tileSize) {
+            for (let y = 0; y < canvas.height; y += tileSize) {
                 ctx.beginPath();
-                ctx.moveTo(startX, y);
-                ctx.lineTo(endX, y);
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
                 ctx.stroke();
             }
             
@@ -1360,12 +1260,10 @@
             ctx.strokeStyle = '#444';
             ctx.setLineDash([20, 10]);
             ctx.lineWidth = 3;
-            for (let x = 480; x < worldWidth; x += 480) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, worldHeight);
-                ctx.stroke();
-            }
+            ctx.beginPath();
+            ctx.moveTo(canvas.width/2, 0);
+            ctx.lineTo(canvas.width/2, canvas.height);
+            ctx.stroke();
             ctx.setLineDash([]);
 
             // Sangue no chão
@@ -1378,18 +1276,12 @@
             });
             ctx.globalAlpha = 1;
 
-            // Desenha mapa/paredes (apenas visíveis)
+            // Desenha mapa/paredes
             ctx.shadowBlur = 10;
             ctx.shadowColor = colors.neonPurple;
-            
-            const startTileX = Math.floor(game.camera.x / tileSize);
-            const endTileX = Math.ceil((game.camera.x + game.camera.width) / tileSize);
-            const startTileY = Math.floor(game.camera.y / tileSize);
-            const endTileY = Math.ceil((game.camera.y + game.camera.height) / tileSize);
-            
-            for (let y = startTileY; y < endTileY && y < map.length; y++) {
-                for (let x = startTileX; x < endTileX && x < map[y].length; x++) {
-                    if (map[y] && map[y][x] === 1) {
+            for (let y = 0; y < map.length; y++) {
+                for (let x = 0; x < map[y].length; x++) {
+                    if (map[y][x] === 1) {
                         ctx.fillStyle = colors.wall;
                         ctx.fillRect(x * tileSize, y * tileSize, tileSize - 1, tileSize - 1);
                         
@@ -1541,14 +1433,13 @@
                 ctx.textAlign = 'right';
                 ctx.fillText(`NÍVEL ${game.currentLevel + 1}: ${level.name}`, canvas.width - 20, 40);
                 
-            // UI de vida simplificada com corações
-            const fullHearts = '❤️'.repeat(player.health);
-            const emptyHearts = '🖤'.repeat(3 - player.health);
-            ctx.save();
-            ctx.font = 'bold 32px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(fullHearts + emptyHearts, 20, 50);
-            ctx.restore();
+                // UI de vida (só 3 corações)
+                ctx.save();
+                ctx.fillStyle = colors.neonPink;
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText('❤️'.repeat(player.health), 20, 90);
+                ctx.restore();
                 
                 // Mensagem se precisa matar inimigos
                 if (level.exit && enemies.length > 0) {
@@ -1559,8 +1450,6 @@
             }
             
             // Efeito de scanlines
-            ctx.restore(); // Volta pro espaço da tela (sem câmera)
-            
             ctx.globalAlpha = 0.05;
             for (let y = 0; y < canvas.height; y += 4) {
                 ctx.fillStyle = '#fff';
@@ -1577,57 +1466,6 @@
             gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // UI (sempre visível, não afetada pela câmera)
-            // UI de vida simplificada com corações
-            const fullHearts = '❤️'.repeat(player.health);
-            const emptyHearts = '🖤'.repeat(3 - player.health);
-            ctx.save();
-            ctx.font = 'bold 32px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText(fullHearts + emptyHearts, 20, 50);
-            ctx.restore();
-            
-            // UI do nível
-            if (levels[game.currentLevel]) {
-                const level = levels[game.currentLevel];
-                ctx.fillStyle = colors.neonPurple;
-                ctx.font = 'bold 16px Orbitron';
-                ctx.textAlign = 'right';
-                ctx.fillText(`NÍVEL ${game.currentLevel + 1}: ${level.name}`, canvas.width - 20, 40);
-                
-                // Mensagem se precisa matar inimigos
-                if (level.exit && enemies.length > 0) {
-                    ctx.fillStyle = colors.enemy;
-                    ctx.textAlign = 'center';
-                    ctx.fillText(`ELIMINE ${enemies.length} INIMIGO${enemies.length > 1 ? 'S' : ''}`, canvas.width/2, 60);
-                }
-            }
-            
-            // Minimapa
-            const minimapWidth = 200;
-            const minimapHeight = 60;
-            const minimapX = canvas.width - minimapWidth - 20;
-            const minimapY = canvas.height - minimapHeight - 20;
-            
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(minimapX, minimapY, minimapWidth, minimapHeight);
-            ctx.strokeStyle = colors.neonBlue;
-            ctx.strokeRect(minimapX, minimapY, minimapWidth, minimapHeight);
-            
-            // Player no minimapa
-            const miniPlayerX = minimapX + (player.x / worldWidth) * minimapWidth;
-            const miniPlayerY = minimapY + (player.y / worldHeight) * minimapHeight;
-            ctx.fillStyle = colors.player;
-            ctx.fillRect(miniPlayerX - 2, miniPlayerY - 2, 4, 4);
-            
-            // Inimigos no minimapa
-            ctx.fillStyle = colors.enemy;
-            enemies.forEach(enemy => {
-                const miniEnemyX = minimapX + (enemy.x / worldWidth) * minimapWidth;
-                const miniEnemyY = minimapY + (enemy.y / worldHeight) * minimapHeight;
-                ctx.fillRect(miniEnemyX - 1, miniEnemyY - 1, 2, 2);
-            });
 
             ctx.restore();
         }
