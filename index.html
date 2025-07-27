@@ -447,7 +447,7 @@
                 // Nível 1: Entrada
                 name: "Entrada do Território",
                 playerStart: { x: 100, y: 320 },
-                exit: { x: 860, y: 320, width: 60, height: 100 },
+                exit: { x: 2760, y: 320, width: 60, height: 100 },  // Saída no final
                 enemies: [],  // Sem inimigos no primeiro nível
                 message: "Entre no território inimigo..."
             },
@@ -1301,7 +1301,7 @@
                 }
             }
 
-            // Atualiza UI
+            // Atualiza UI após desenhar barra
             document.getElementById('healthBar').style.width = (player.health / player.maxHealth * 100) + '%';
             document.getElementById('score').textContent = game.score;
             document.getElementById('combo').textContent = game.combo;
