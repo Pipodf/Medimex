@@ -769,10 +769,11 @@
         function generateLevelMap(levelIndex) {
             map = [];
             
-            // Cria bordas
+            // Cria mapa vazio
             for (let y = 0; y < mapHeight; y++) {
                 map[y] = [];
                 for (let x = 0; x < mapWidth; x++) {
+                    // Apenas bordas como paredes
                     if (x === 0 || y === 0 || x === mapWidth - 1 || y === mapHeight - 1) {
                         map[y][x] = 1;
                     } else {
@@ -781,129 +782,159 @@
                 }
             }
             
-            // Pega o nível atual para saber posições seguras
+            // Obtém nível atual
             const level = levels[levelIndex];
-            const safeZones = [];
+            if (!level) return;
             
-            // Adiciona zona segura ao redor do player
-            if (level) {
-                safeZones.push({
-                    x: Math.floor(level.playerStart.x / tileSize),
-                    y: Math.floor(level.playerStart.y / tileSize),
-                    radius: 3
-                });
-                
-                // Adiciona zonas seguras ao redor dos inimigos
-                if (level.enemies) {
-                    level.enemies.forEach(enemy => {
-                        safeZones.push({
-                            x: Math.floor(enemy.x / tileSize),
-                            y: Math.floor(enemy.y / tileSize),
-                            radius: 2
-                        });
-                    });
-                }
-                
-                // Adiciona zonas seguras ao redor dos objetos
-                if (level.sceneObjects) {
-                    level.sceneObjects.forEach(obj => {
-                        safeZones.push({
-                            x: Math.floor(obj.x / tileSize),
-                            y: Math.floor(obj.y / tileSize),
-                            radius: 2
-                        });
-                    });
-                }
-                
-                // Zona segura para saída
-                if (level.exit) {
-                    safeZones.push({
-                        x: Math.floor(level.exit.x / tileSize),
-                        y: Math.floor(level.exit.y / tileSize),
-                        radius: 3
-                    });
-                }
-                
-                // Zona segura para bomba
-                if (level.bombLocation) {
-                    safeZones.push({
-                        x: Math.floor(level.bombLocation.x / tileSize),
-                        y: Math.floor(level.bombLocation.y / tileSize),
-                        radius: 3
-                    });
-                }
-            }
+            // Cria lista de todas as posições ocupadas (com margem de segurança)
+            const occupiedTiles = new Set();
             
-            // Função para verificar se uma posição está em zona segura
-            function isInSafeZone(x, y) {
-                for (let zone of safeZones) {
-                    const dx = x - zone.x;
-                    const dy = y - zone.y;
-                    if (Math.sqrt(dx * dx + dy * dy) <= zone.radius) {
-                        return true;
+            // Função auxiliar para marcar área como ocupada
+            function markOccupiedArea(worldX, worldY, radiusTiles) {
+                const centerX = Math.floor(worldX / tileSize);
+                const centerY = Math.floor(worldY / tileSize);
+                
+                for (let dy = -radiusTiles; dy <= radiusTiles; dy++) {
+                    for (let dx = -radiusTiles; dx <= radiusTiles; dx++) {
+                        const tileX = centerX + dx;
+                        const tileY = centerY + dy;
+                        if (tileX >= 0 && tileX < mapWidth && tileY >= 0 && tileY < mapHeight) {
+                            occupiedTiles.add(`${tileX},${tileY}`);
+                        }
                     }
                 }
-                return false;
             }
             
-            // Adiciona paredes baseado no nível
+            // Marca área do jogador
+            markOccupiedArea(level.playerStart.x, level.playerStart.y, 4);
+            
+            // Marca áreas dos inimigos
+            if (level.enemies) {
+                level.enemies.forEach(enemy => {
+                    markOccupiedArea(enemy.x, enemy.y, 3);
+                });
+            }
+            
+            // Marca áreas dos objetos
+            if (level.sceneObjects) {
+                level.sceneObjects.forEach(obj => {
+                    markOccupiedArea(obj.x, obj.y, 3);
+                });
+            }
+            
+            // Marca área da saída
+            if (level.exit) {
+                markOccupiedArea(level.exit.x, level.exit.y, 4);
+            }
+            
+            // Marca área da bomba
+            if (level.bombLocation) {
+                markOccupiedArea(level.bombLocation.x, level.bombLocation.y, 4);
+            }
+            
+            // Agora adiciona paredes apenas em áreas seguras
             if (levelIndex === 0) {
-                // Tutorial: obstáculos simples em posições fixas
-                for (let i = 0; i < 8; i++) {
-                    const x = 10 + i * 15;
-                    for (let y = 5; y < mapHeight - 5; y++) {
-                        if ((y < 8 || y > 11) && !isInSafeZone(x, y)) {
+                // Tutorial: corredores verticais simples
+                for (let i = 1; i < 7; i++) {
+                    const x = 15 + i * 18;
+                    if (x < mapWidth - 1) {
+                        for (let y = 2; y < mapHeight - 2; y++) {
+                            // Cria abertura no meio
+                            if ((y < 7 || y > 12) && !occupiedTiles.has(`${x},${y}`)) {
+                                map[y][x] = 1;
+                            }
+                        }
+                    }
+                }
+            } else if (levelIndex === 1) {
+                // Nível 1: algumas paredes estratégicas
+                // Parede horizontal superior
+                for (let x = 15; x < 35; x++) {
+                    if (!occupiedTiles.has(`${x},6`)) {
+                        map[6][x] = 1;
+                    }
+                }
+                
+                // Parede horizontal inferior
+                for (let x = 50; x < 70; x++) {
+                    if (!occupiedTiles.has(`${x},13`)) {
+                        map[13][x] = 1;
+                    }
+                }
+                
+                // Algumas paredes verticais
+                for (let y = 4; y < 10; y++) {
+                    if (!occupiedTiles.has(`45,${y}`)) {
+                        map[y][45] = 1;
+                    }
+                }
+                
+                for (let y = 10; y < 16; y++) {
+                    if (!occupiedTiles.has(`75,${y}`)) {
+                        map[y][75] = 1;
+                    }
+                }
+            } else if (levelIndex === 2) {
+                // Nível 2: labirinto mais complexo
+                // Cria algumas salas
+                
+                // Sala 1 (esquerda)
+                for (let x = 25; x < 45; x++) {
+                    if (!occupiedTiles.has(`${x},5`)) map[5][x] = 1;
+                    if (!occupiedTiles.has(`${x},15`)) map[15][x] = 1;
+                }
+                for (let y = 5; y < 16; y++) {
+                    if (!occupiedTiles.has(`25,${y}`)) map[y][25] = 1;
+                    if (!occupiedTiles.has(`45,${y}`)) map[y][45] = 1;
+                }
+                // Portas
+                map[10][25] = 0;
+                map[10][45] = 0;
+                
+                // Sala 2 (centro)
+                for (let x = 55; x < 75; x++) {
+                    if (!occupiedTiles.has(`${x},7`)) map[7][x] = 1;
+                    if (!occupiedTiles.has(`${x},13`)) map[13][x] = 1;
+                }
+                for (let y = 7; y < 14; y++) {
+                    if (!occupiedTiles.has(`55,${y}`)) map[y][55] = 1;
+                    if (!occupiedTiles.has(`75,${y}`)) map[y][75] = 1;
+                }
+                // Portas
+                map[10][55] = 0;
+                map[10][75] = 0;
+                
+                // Corredores conectando
+                for (let x = 45; x < 55; x++) {
+                    if (!occupiedTiles.has(`${x},8`)) map[8][x] = 1;
+                    if (!occupiedTiles.has(`${x},12`)) map[12][x] = 1;
+                }
+            } else if (levelIndex === 3) {
+                // Nível 3: base com múltiplas rotas
+                
+                // Paredes principais horizontais
+                for (let i = 0; i < 5; i++) {
+                    const y = 4 + i * 3;
+                    for (let x = 10 + i * 5; x < mapWidth - 10 - i * 5; x++) {
+                        if (!occupiedTiles.has(`${x},${y}`) && Math.random() > 0.3) {
                             map[y][x] = 1;
                         }
                     }
                 }
-            } else if (levelIndex >= 1) {
-                // Níveis com paredes estratégicas (não aleatórias)
-                const wallPatterns = [
-                    // Padrão 1: Corredores horizontais
-                    () => {
-                        for (let x = 10; x < mapWidth - 10; x += 30) {
-                            for (let y = 5; y < mapHeight - 5; y++) {
-                                if ((y < 7 || y > 12) && !isInSafeZone(x, y)) {
-                                    map[y][x] = 1;
-                                }
-                            }
-                        }
-                    },
-                    // Padrão 2: Salas
-                    () => {
-                        // Sala 1
-                        for (let x = 20; x < 40; x++) {
-                            if (!isInSafeZone(x, 5)) map[5][x] = 1;
-                            if (!isInSafeZone(x, 14)) map[14][x] = 1;
-                        }
-                        for (let y = 5; y < 15; y++) {
-                            if (!isInSafeZone(20, y)) map[y][20] = 1;
-                            if (!isInSafeZone(40, y)) map[y][40] = 1;
-                        }
-                        
-                        // Sala 2
-                        for (let x = 60; x < 80; x++) {
-                            if (!isInSafeZone(x, 8)) map[8][x] = 1;
-                            if (!isInSafeZone(x, 11)) map[11][x] = 1;
-                        }
-                    },
-                    // Padrão 3: Labirinto simples
-                    () => {
-                        // Paredes verticais
-                        for (let x = 15; x < mapWidth - 15; x += 20) {
-                            for (let y = 3; y < mapHeight - 3; y++) {
-                                if (y < 6 || y > 13) {
-                                    if (!isInSafeZone(x, y)) map[y][x] = 1;
-                                }
+                
+                // Cria aberturas estratégicas
+                for (let i = 0; i < 10; i++) {
+                    const x = 20 + i * 10;
+                    const y = 4 + (i % 5) * 3;
+                    if (x < mapWidth && y < mapHeight) {
+                        // Cria abertura de 3 tiles
+                        for (let dx = -1; dx <= 1; dx++) {
+                            if (x + dx > 0 && x + dx < mapWidth - 1) {
+                                map[y][x + dx] = 0;
                             }
                         }
                     }
-                ];
-                
-                // Usa um padrão baseado no nível
-                const patternIndex = (levelIndex - 1) % wallPatterns.length;
-                wallPatterns[patternIndex]();
+                }
             }
         }
 
